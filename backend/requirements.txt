@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+pydantic-settings
+httpx
+respx
+pytest
+pytest-asyncio
+alembic
+slowapi
+python-dotenv
+ruff
+asyncpg
