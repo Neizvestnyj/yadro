@@ -2,6 +2,8 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings
 
+from app.core.logging import logger
+
 BASE_DIR = Path(__file__).resolve().parents[2]
 ENV_PATH = BASE_DIR / ".env"
 
@@ -16,7 +18,7 @@ class Settings(BaseSettings):
     :type RANDOMUSER_API_URL: str
     """
 
-    DATABASE_URL: str
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:1234@localhost:5432/randomuser_db"
     RANDOMUSER_API_URL: str = "https://randomuser.me/api/"
 
     class Config:
@@ -27,6 +29,7 @@ class Settings(BaseSettings):
 
 
 settings: Settings = Settings()
+logger.info(f"{settings.__dict__}")
 
 if __name__ == "__main__":
     print(settings)

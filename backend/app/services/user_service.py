@@ -1,3 +1,4 @@
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import func
 
@@ -22,7 +23,7 @@ async def fetch_and_save_users(db: AsyncSession, count: int) -> list[UserOut]:
     if count > 10000:
         raise ValueError("Too many users requested")
 
-    users_data: dict = await fetch_random_users(count) # Получаем данные пользователей из randomuser.me.
+    users_data: dict = await fetch_random_users(count)  # Получаем данные пользователей из randomuser.me.
     users: list[UserOut] = []
     for user_data in users_data["results"]:
         user: UserCreate = UserCreate(
@@ -108,5 +109,8 @@ async def get_random_user_service(db: AsyncSession) -> UserOut | None:
     :returns: Случайный пользователь или None, если база пуста.
     :rtype: Optional[UserOut]
     """
-    result = await db.execute(func.random().select().join(User).order_by(func.random()).limit(1))
-    return result.scalar_one_or_none()
+    stmt = select(User).order_by(func.random()).limit(1)
+    result = await db.execute(stmt)
+    user = result.scalar_one_or_none()
+
+    return UserOut.model_validate(user) if user else None

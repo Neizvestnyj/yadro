@@ -1,0 +1,24 @@
+### Fetch users from randomuser.me
+POST http://localhost:8000/v1/users/fetch?count=5
+Content-Type: application/json
+
+### Get list of users with pagination
+GET http://localhost:8000/v1/users?limit=10&offset=0
+Content-Type: application/json
+
+### Get user by ID
+GET http://localhost:8000/v1/users/1
+Content-Type: application/json
+
+### Update user
+PUT http://localhost:8000/v1/users/1
+Content-Type: application/json
+
+{
+    "first_name": "UpdatedName",
+    "email": "updated.email@example.com"
+}
+
+### Delete user
+DELETE http://localhost:8000/v1/users/1
+Content-Type: application/json
