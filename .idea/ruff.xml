@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="RuffConfigService">
-    <option name="globalRuffExecutablePath" value="C:\Users\pikro\anaconda3\Scripts\ruff.exe" />
-    <option name="ruffConfigPath" value="C:\Users\pikro\PycharmProjects\yadro\backend\ruff.toml" />
+    <option name="ruffConfigPath" value="C:\Users\neizvestnyj\PycharmProjects\yadro\backend\ruff.toml" />
     <option name="useRuffFormat" value="true" />
+    <option name="useRuffImportOptimizer" value="true" />
     <option name="useRuffServer" value="true" />
   </component>
 </project>

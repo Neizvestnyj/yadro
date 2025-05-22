@@ -1,6 +1,7 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
+import sqlalchemy
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -41,7 +42,7 @@ class DatabaseManager:
                     await conn.run_sync(Base.metadata.create_all)
 
             logger.info("Successfully connected to PostgreSQL")
-        except Exception as e:
+        except sqlalchemy.exc.OperationalError as e:
             logger.error(f"Database connection error: {e}")
             raise
 
