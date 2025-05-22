@@ -15,8 +15,8 @@ PUT http://localhost:8000/v1/users/1
 Content-Type: application/json
 
 {
-    "first_name": "UpdatedName",
-    "email": "updated.email@example.com"
+  "first_name": "UpdatedName",
+  "email": "updated.email@example.com"
 }
 
 ### Delete user
