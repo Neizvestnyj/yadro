@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     """
 
     DATABASE_URL: str = "postgresql+asyncpg://postgres:1234@localhost:5432/randomuser_db"
+    SQLALCHEMY_TEST_DATABASE_URL: str = "postgresql+asyncpg://postgres:1234@localhost:5432/test_randomuser_db"
     RANDOMUSER_API_URL: str = "https://randomuser.me/api/"
 
     class Config:
