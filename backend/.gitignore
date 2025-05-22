@@ -48,10 +48,6 @@ logs/
 *.swp
 # PyCharm
 .idea/
-!/.idea/*.iml
-!/.idea/modules.xml
-!/.idea/vcs.xml
-!/.idea/runConfigurations
 
 # Environments
 venv
