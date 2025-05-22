@@ -3,10 +3,10 @@ from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
 
-from api.v1 import random, users
-from core.logging import logger
-from db.session import db_manager, get_db
-from services.user_service import fetch_and_save_users
+from app.api.v1 import random, users
+from app.core.logging import logger
+from app.db.session import db_manager, get_db
+from app.services.user_service import fetch_and_save_users
 
 # Вынесенная зависимость, чтобы избежать B008
 db_dependency = Depends(get_db)
@@ -40,7 +40,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 app = FastAPI(title="Random User API", lifespan=lifespan)
 app.include_router(users.router)
 app.include_router(random.router)
-
 
 if __name__ == "__main__":
     import uvicorn

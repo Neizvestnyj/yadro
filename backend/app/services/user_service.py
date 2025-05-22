@@ -22,7 +22,7 @@ async def fetch_and_save_users(db: AsyncSession, count: int) -> list[UserOut]:
     if count > 10000:
         raise ValueError("Too many users requested")
 
-    users_data: dict = await fetch_random_users(count)
+    users_data: dict = await fetch_random_users(count) # Получаем данные пользователей из randomuser.me.
     users: list[UserOut] = []
     for user_data in users_data["results"]:
         user: UserCreate = UserCreate(

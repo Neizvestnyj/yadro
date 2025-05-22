@@ -16,7 +16,7 @@ async def create_user(db: AsyncSession, user: UserCreate) -> User:
     :returns: Созданный пользователь.
     :rtype: User
     """
-    db_user = User(**user.dict())
+    db_user = User(**user.model_dump())
     db.add(db_user)
     await db.commit()
     await db.refresh(db_user)

@@ -13,8 +13,8 @@ class DatabaseManager:
     """Базовый класс для управления подключением к базе данных."""
 
     def __init__(
-        self,
-        url: str = None,
+            self,
+            url: str = None,
     ) -> None:
         """
         Инициализирует подключение к базе данных PostgreSQL.
@@ -27,8 +27,8 @@ class DatabaseManager:
         self.engine = create_async_engine(
             url,
             echo=False,
-            pool_size=50,
-            max_overflow=10,
+            pool_size=5,
+            max_overflow=5,
             isolation_level="READ COMMITTED",
         )
         self.async_session = sessionmaker(self.engine, expire_on_commit=False, class_=AsyncSession)
@@ -53,20 +53,22 @@ class DatabaseManager:
     @asynccontextmanager
     async def session(self) -> AsyncGenerator[AsyncSession, None]:
         """
-        Асинхронный контекстный менеджер для сессии базы данных.
+         Асинхронный контекстный менеджер для сессии базы данных.
 
-        Откатывает транзакцию при ошибке и автоматически закрывает сессию.
-        """
+         Откатывает транзакцию при ошибке и автоматически закрывает сессию.
+         """
         async with self.async_session() as session:
             try:
+                logger.debug("Opening new database session")
                 yield session
-                await session.commit()
+                logger.debug("Session ready to commit or rollback")
             except Exception as e:
                 await session.rollback()
                 logger.error(f"Database error: {e}")
                 raise
             finally:
                 await session.close()
+                logger.debug("Session closed")
 
 
 # Глобальный экземпляр DatabaseManager
@@ -87,8 +89,10 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 if __name__ == "__main__":
     import asyncio
 
+
     async def initialize() -> None:
         """Инициализация базы данных."""
         await db_manager.connect()
+
 
     asyncio.run(initialize())
