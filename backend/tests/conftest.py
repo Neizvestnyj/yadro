@@ -33,7 +33,7 @@ async def async_client(async_session: AsyncSession) -> AsyncGenerator[AsyncClien
     :returns: Асинхронный тестовый клиент FastAPI.
     :rtype: AsyncGenerator[AsyncClient, None]
     """
-    with patch('app.main.fetch_and_save_users', new_callable=AsyncMock) as mock_fetch:
+    with patch('app.main.fetch_and_save_users', new_callable=AsyncMock) as _:
         app.dependency_overrides[get_session] = lambda: async_session
         _transport = ASGITransport(app=app)
 

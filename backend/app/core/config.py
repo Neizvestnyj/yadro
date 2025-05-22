@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from app.core.logging import logger
 
@@ -22,11 +22,7 @@ class Settings(BaseSettings):
     SQLALCHEMY_TEST_DATABASE_URL: str = "postgresql+asyncpg://postgres:1234@localhost:5432/test_randomuser_db"
     RANDOMUSER_API_URL: str = "https://randomuser.me/api/"
 
-    class Config:
-        """Конфигурация Pydantic Settings для чтения переменных из .env-файла."""
-
-        env_file = str(ENV_PATH)
-        env_file_encoding = "utf-8"
+    model_config = SettingsConfigDict(env_file=str(ENV_PATH), env_file_encoding="utf-8")
 
 
 settings: Settings = Settings()

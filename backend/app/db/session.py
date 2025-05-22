@@ -54,10 +54,10 @@ class DatabaseManager:
     @asynccontextmanager
     async def session(self) -> AsyncGenerator[AsyncSession, None]:
         """
-         Асинхронный контекстный менеджер для сессии базы данных.
+        Асинхронный контекстный менеджер для сессии базы данных.
 
-         Откатывает транзакцию при ошибке и автоматически закрывает сессию.
-         """
+        Откатывает транзакцию при ошибке и автоматически закрывает сессию.
+        """
         async with self.async_session() as session:
             try:
                 logger.debug("Opening new database session")
