@@ -28,10 +28,10 @@ const RandomUserPage = () => {
                 <Card.Body>
                     <Card.Title>{user.first_name} {user.last_name}</Card.Title>
                     <Card.Text>
-                        <strong>Gender:</strong> {user.gender}<br/>
+                        <strong>Пол:</strong> {user.gender}<br/>
                         <strong>Email:</strong> {user.email}<br/>
-                        <strong>Phone:</strong> {user.phone}<br/>
-                        <strong>Location:</strong> {user.location}
+                        <strong>Телефон:</strong> {user.phone}<br/>
+                        <strong>Местоположение:</strong> {user.location}
                     </Card.Text>
                     <Button as={Link} to="/" variant="primary">
                         Back to Main

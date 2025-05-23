@@ -1,297 +1,315 @@
-import {useEffect, useRef, useState} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
-import {Button, Form, Pagination, Spinner, Table} from 'react-bootstrap';
-import {Link, useNavigate} from 'react-router-dom';
+import { Button, Form, Pagination, Spinner, Table, Alert } from 'react-bootstrap';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 /**
- * Компонент главной страницы для загрузки и отображения пользователей с динамической пагинацией.
+ * Компонент главной страницы для отображения пользователей с пагинацией.
  *
- * :returns: JSX элемент главной страницы.
+ * :returns: JSX-элемент главной страницы.
  * :rtype: JSX.Element
  */
 const MainPage = () => {
-    const [count, setCount] = useState('');
-    const [users, setUsers] = useState([]); // Буфер всех загруженных пользователей
-    const [page, setPage] = useState(1); // Текущая страница
-    const [isFetching, setIsFetching] = useState(false); // Статус запроса новых пользователей
-    const [isLoadingMore, setIsLoadingMore] = useState(false); // Статус фоновой загрузки
-    const [hasMore, setHasMore] = useState(true); // Есть ли ещё данные
-    const limit = 10; // Записей на странице
-    const bufferSize = 200; // Целевой размер буфера
-    const fetchSize = 50; // Размер одного запроса
-    const navigate = useNavigate();
-    const fetchTimeoutRef = useRef(null); // Для управления фоновыми запросами
+  const [count, setCount] = useState('');
+  const [users, setUsers] = useState(() => window.userCache?.users || []);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [page, setPage] = useState(() => {
+    const pageParam = parseInt(searchParams.get('page'), 10);
+    return pageParam > 0 ? pageParam : 1;
+  });
+  const [totalPages, setTotalPages] = useState(1);
+  const [isFetching, setIsFetching] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [error, setError] = useState(''); // Состояние для ошибки
+  const limit = 10;
+  const bufferSize = 200;
+  const fetchSize = 50;
+  const navigate = useNavigate();
+  const fetchTimeoutRef = useRef(null);
 
-    /**
-     * Загружает пользователей с указанным смещением.
-     *
-     * :param offset: Смещение для запроса.
-     * :type offset: number
-     * :returns: Массив пользователей.
-     * :rtype: Array
-     */
-    const fetchUsers = async (offset) => {
-        console.log(`Fetching users with offset=${offset}, limit=${fetchSize}`);
-        try {
-            const response = await axios.get(`http://localhost:8000/v1/users?limit=${fetchSize}&offset=${offset}`);
-            console.log(`Fetched ${response.data.length} users`);
-            return response.data;
-        } catch (error) {
-            console.error('Error fetching users:', error);
-            return [];
-        }
-    };
+  if (!window.userCache) {
+    window.userCache = { users: [] };
+  }
 
-    /**
-     * Запрашивает новые записи, если буфер недостаточен.
-     */
-    const loadMoreUsers = async () => {
-        if (!hasMore || isLoadingMore) {
-            console.log('Skipping loadMoreUsers:', {hasMore, isLoadingMore, usersLength: users.length});
-            return;
-        }
-        setIsLoadingMore(true);
-        const offset = users.length;
-        const newUsers = await fetchUsers(offset);
+  /**
+   * Загружает пользователей с указанным смещением.
+   *
+   * :param offset: Смещение.
+   * :type offset: number
+   * :returns: Массив пользователей.
+   * :rtype: Array
+   */
+  const fetchUsers = async (offset) => {
+    console.log(`Загрузка: offset=${offset}, limit=${fetchSize}`);
+    try {
+      const response = await axios.get(`http://localhost:8000/v1/users?limit=${fetchSize}&offset=${offset}`, {
+        timeout: 5000,
+      });
+      console.log(`Загружено ${response.data.length} пользователей`);
+      const totalUsers = parseInt(response.headers['x-total-count'], 10) || response.data.length;
+      setTotalPages(Math.ceil(totalUsers / limit));
+      return response.data;
+    } catch (error) {
+      console.error('Ошибка:', error);
+      setError('Ошибка при загрузке пользователей. Попробуйте снова.');
+      return [];
+    }
+  };
+
+  /**
+   * Загружает дополнительные пользователи.
+   */
+  const loadMoreUsers = async () => {
+    if (!hasMore || isLoadingMore) {
+      console.log('Пропуск:', { hasMore, isLoadingMore, usersLength: users.length });
+      return;
+    }
+    setIsLoadingMore(true);
+    const offset = users.length;
+    const newUsers = await fetchUsers(offset);
+    if (newUsers.length < fetchSize) {
+      setHasMore(false);
+      console.log('Данные закончились');
+    }
+    setUsers((prev) => {
+      const updated = [...prev, ...newUsers];
+      window.userCache.users = updated;
+      return updated;
+    });
+    setIsLoadingMore(false);
+  };
+
+  /**
+   * Загружает новых пользователей из API.
+   */
+  const handleFetchUsers = async () => {
+    if (!count || parseInt(count, 10) <= 0) {
+      setError('Количество пользователей должно быть больше 0');
+      return;
+    }
+    setError(''); // Очищаем ошибку перед загрузкой
+    setIsFetching(true);
+    try {
+      await axios.post(`http://localhost:8000/v1/users/fetch?count=${count}`);
+      setUsers([]);
+      window.userCache.users = [];
+      setPage(1);
+      setHasMore(true);
+      setSearchParams({ page: '1' });
+      const newUsers = await fetchUsers(0);
+      setUsers(newUsers);
+      window.userCache.users = newUsers;
+      if (newUsers.length < fetchSize) {
+        setHasMore(false);
+      }
+      console.log('Инициализировано:', newUsers.length);
+    } catch (error) {
+      console.error('Ошибка API:', error);
+      setError('Ошибка при загрузке пользователей из API. Попробуйте снова.');
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
+  /**
+   * Переходит на случайного пользователя.
+   */
+  const handleGetRandomUser = async () => {
+    navigate('/random');
+  };
+
+  /**
+   * Очищает ошибку при изменении count.
+   */
+  useEffect(() => {
+    setError('');
+  }, [count]);
+
+  /**
+   * Инициализирует буфер.
+   */
+  useEffect(() => {
+    const initializeUsers = async () => {
+      if (users.length === 0 && window.userCache.users.length === 0) {
+        const newUsers = await fetchUsers(0);
+        setUsers(newUsers);
+        window.userCache.users = newUsers;
         if (newUsers.length < fetchSize) {
-            setHasMore(false); // Данные закончились
-            console.log('No more data available');
+          setHasMore(false);
         }
-        setUsers((prev) => [...prev, ...newUsers]);
-        setIsLoadingMore(false);
+        console.log('Инициализировано:', newUsers.length);
+      }
     };
+    initializeUsers();
+  }, []);
 
-    /**
-     * Отправляет запрос на загрузку новых пользователей из API.
-     */
-    const handleFetchUsers = async () => {
-        if (!count || count <= 0) return;
-        setIsFetching(true);
-        try {
-            await axios.post(`http://localhost:8000/v1/users/fetch?count=${count}`);
-            setUsers([]); // Очищаем буфер
-            setPage(1);
-            setHasMore(true);
-            const newUsers = await fetchUsers(0);
-            setUsers(newUsers);
-            if (newUsers.length < fetchSize) {
-                setHasMore(false);
-            }
-            console.log('Initialized with', newUsers.length, 'users');
-        } catch (error) {
-            console.error('Error fetching users from API:', error);
-        } finally {
-            setIsFetching(false);
-        }
-    };
+  /**
+   * Проверяет необходимость загрузки и обновляет URL.
+   */
+  useEffect(() => {
+    if (fetchTimeoutRef.current) {
+      clearTimeout(fetchTimeoutRef.current);
+    }
+    console.log('Состояние:', { page, usersLength: users.length, hasMore });
 
-    /**
-     * Переходит на страницу случайного пользователя.
-     */
-    const handleGetRandomUser = async () => {
-        navigate('/random');
-    };
+    setSearchParams({ page: page.toString() });
 
-    /**
-     * Проверяет необходимость загрузки данных для текущей страницы и в фоне.
-     */
-    useEffect(() => {
-        if (fetchTimeoutRef.current) {
-            clearTimeout(fetchTimeoutRef.current);
-        }
-        console.log('Current state:', {page, usersLength: users.length, hasMore});
+    if (users.length < page * limit && hasMore) {
+      console.log('Загрузка для страницы', page);
+      loadMoreUsers();
+    } else if (users.length - page * limit < bufferSize && hasMore) {
+      console.log('Загрузка для буфера');
+      loadMoreUsers();
+    }
 
-        // Принудительная загрузка, если данных для текущей страницы нет
-        if (users.length < page * limit && hasMore) {
-            console.log('Immediate loadMoreUsers for page', page);
-            loadMoreUsers();
-        }
-        // Фоновая загрузка, если буфер мал
-        else if (users.length - page * limit < bufferSize && hasMore) {
-            console.log('Scheduling loadMoreUsers');
-            fetchTimeoutRef.current = setTimeout(loadMoreUsers, 200); // Уменьшена задержка
-        }
+    return () => clearTimeout(fetchTimeoutRef.current);
+  }, [page, users.length, hasMore, setSearchParams]);
 
-        return () => clearTimeout(fetchTimeoutRef.current);
-    }, [page, users.length, hasMore]);
+  /**
+   * Создаёт элементы пагинации.
+   *
+   * :returns: Массив JSX-элементов.
+   * :rtype: JSX.Element[]
+   */
+  const getPaginationItems = () => {
+    const items = [];
+    const maxPagesToShow = 5;
+    const totalAvailablePages = Math.ceil(users.length / limit);
+    const maxPage = hasMore ? Math.max(page + maxPagesToShow, totalAvailablePages) : totalPages;
 
-    /**
-     * Инициализирует буфер при первом рендере.
-     */
-    useEffect(() => {
-        const initializeUsers = async () => {
-            if (users.length === 0) {
-                const newUsers = await fetchUsers(0);
-                setUsers(newUsers);
-                if (newUsers.length < fetchSize) {
-                    setHasMore(false);
-                }
-                console.log('Initialized with', newUsers.length, 'users');
-            }
-        };
-        initializeUsers();
-    }, []);
-
-    /**
-     * Генерирует элементы пагинации для отображения.
-     *
-     * :returns: Массив JSX элементов для пагинации.
-     * :rtype: JSX.Element[]
-     */
-    const getPaginationItems = () => {
-        const items = [];
-        const maxPagesToShow = 5;
-        const totalAvailablePages = Math.ceil(users.length / limit);
-        const maxPage = hasMore ? Math.max(page + maxPagesToShow, totalAvailablePages) : totalAvailablePages;
-
-        // Кнопка "в начало"
-        items.push(
-            <Pagination.Item
-                key="first"
-                disabled={page === 1}
-                onClick={() => setPage(1)}
-            >
-                ««
-            </Pagination.Item>
-        );
-
-        // Перемотка назад (на 5 страниц)
-        items.push(
-            <Pagination.Item
-                key="rewind-back"
-                disabled={page <= maxPagesToShow}
-                onClick={() => setPage(Math.max(1, page - maxPagesToShow))}
-            >
-                «
-            </Pagination.Item>
-        );
-
-        // Центральные страницы
-        const startPage = Math.max(1, page - Math.floor(maxPagesToShow / 2));
-        const endPage = Math.min(maxPage, startPage + maxPagesToShow - 1);
-        for (let i = startPage; i <= endPage; i++) {
-            items.push(
-                <Pagination.Item
-                    key={i}
-                    active={i === page}
-                    onClick={() => setPage(i)}
-                >
-                    {i}
-                </Pagination.Item>
-            );
-        }
-
-        // Перемотка вперёд (на 5 страниц)
-        if (hasMore || page + maxPagesToShow <= totalAvailablePages) {
-            items.push(
-                <Pagination.Item
-                    key="rewind-forward"
-                    onClick={() => setPage(page + maxPagesToShow)}
-                >
-                    »
-                </Pagination.Item>
-            );
-        }
-
-        return items;
-    };
-
-    // Текущая страница пользователей
-    const currentPageUsers = users.slice((page - 1) * limit, page * limit);
-    console.log('Rendering page', page, 'with', currentPageUsers.length, 'users');
-
-    return (
-        <div>
-            <h1>Random User App</h1>
-            <Form className="mb-4">
-                <Form.Group className="mb-3">
-                    <Form.Label>Number of users to fetch</Form.Label>
-                    <Form.Control
-                        type="number"
-                        value={count}
-                        onChange={(e) => setCount(e.target.value)}
-                        placeholder="Enter number"
-                        disabled={isFetching}
-                    />
-                </Form.Group>
-                <Button
-                    variant="primary"
-                    onClick={handleFetchUsers}
-                    className="me-2"
-                    disabled={isFetching}
-                >
-                    {isFetching ? (
-                        <>
-                            <Spinner
-                                as="span"
-                                animation="border"
-                                size="sm"
-                                role="status"
-                                aria-hidden="true"
-                            />
-                            {' Fetching...'}
-                        </>
-                    ) : (
-                        'Fetch Users'
-                    )}
-                </Button>
-                <Button variant="secondary" onClick={handleGetRandomUser} disabled={isFetching}>
-                    Get Random User
-                </Button>
-            </Form>
-
-            <Table striped bordered hover>
-                <thead>
-                <tr>
-                    <th>Photo</th>
-                    <th>Gender</th>
-                    <th>First Name</th>
-                    <th>Last Name</th>
-                    <th>Email</th>
-                    <th>Phone</th>
-                    <th>Location</th>
-                    <th>Details</th>
-                </tr>
-                </thead>
-                <tbody>
-                {currentPageUsers.length === 0 ? (
-                    <tr>
-                        <td colSpan="8">
-                            {isLoadingMore ? (
-                                <>
-                                    <Spinner animation="border" size="sm"/> Loading users...
-                                </>
-                            ) : (
-                                'No users available for this page'
-                            )}
-                        </td>
-                    </tr>
-                ) : (
-                    currentPageUsers.map((user) => (
-                        <tr key={user.id}>
-                            <td>
-                                <img src={user.picture} alt="User" width="50"/>
-                            </td>
-                            <td>{user.gender}</td>
-                            <td>{user.first_name}</td>
-                            <td>{user.last_name}</td>
-                            <td>{user.email}</td>
-                            <td>{user.phone}</td>
-                            <td>{user.location}</td>
-                            <td>
-                                <Link to={`/user/${user.id}`}>View</Link>
-                            </td>
-                        </tr>
-                    ))
-                )}
-                </tbody>
-            </Table>
-
-            <Pagination className="justify-content-center">
-                {getPaginationItems()}
-            </Pagination>
-        </div>
+    items.push(
+      <Pagination.Item key="first" disabled={page === 1} onClick={() => setPage(1)}>
+        ««
+      </Pagination.Item>
     );
+
+    items.push(
+      <Pagination.Item
+        key="rewind-back"
+        disabled={page <= maxPagesToShow}
+        onClick={() => setPage(Math.max(1, page - maxPagesToShow))}
+      >
+        «
+      </Pagination.Item>
+    );
+
+    const startPage = Math.max(1, page - Math.floor(maxPagesToShow / 2));
+    const endPage = Math.min(maxPage, startPage + maxPagesToShow - 1);
+    for (let i = startPage; i <= endPage; i++) {
+      items.push(
+        <Pagination.Item key={i} active={i === page} onClick={() => setPage(i)}>
+          {i}
+        </Pagination.Item>
+      );
+    }
+
+    if (hasMore || page + maxPagesToShow <= totalPages) {
+      items.push(
+        <Pagination.Item key="rewind-forward" onClick={() => setPage(page + maxPagesToShow)}>
+          »
+        </Pagination.Item>
+      );
+    }
+
+    return items;
+  };
+
+  const currentPageUsers = useMemo(
+    () => users.slice((page - 1) * limit, page * limit),
+    [users, page, limit]
+  );
+  console.log('Рендер страницы', page, 'с', currentPageUsers.length);
+
+  return (
+    <div>
+      <h1>Приложение Random User</h1>
+      {error && (
+        <Alert variant="danger" onClose={() => setError('')} dismissible>
+          {error}
+        </Alert>
+      )}
+      <Form className="mb-4">
+        <Form.Group className="mb-3">
+          <Form.Label>Количество пользователей</Form.Label>
+          <Form.Control
+            type="number"
+            value={count}
+            onChange={(e) => setCount(e.target.value)}
+            placeholder="Введите число"
+            disabled={isFetching}
+          />
+        </Form.Group>
+        <Button variant="primary" onClick={handleFetchUsers} className="me-2" disabled={isFetching}>
+          {isFetching ? (
+            <>
+              <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
+              {' Загрузка...'}
+            </>
+          ) : (
+            'Загрузить'
+          )}
+        </Button>
+        <Button variant="secondary" onClick={handleGetRandomUser} disabled={isFetching}>
+          Случайный пользователь
+        </Button>
+      </Form>
+
+      <Table striped bordered hover>
+        <thead>
+          <tr>
+            <th>Фото</th>
+            <th>Пол</th>
+            <th>Имя</th>
+            <th>Фамилия</th>
+            <th>Email</th>
+            <th>Телефон</th>
+            <th>Местоположение</th>
+            <th>Детали</th>
+          </tr>
+        </thead>
+        <tbody>
+          {currentPageUsers.length === 0 ? (
+            <tr>
+              <td colSpan="8">
+                {isLoadingMore ? (
+                  <>
+                    <Spinner animation="border" size="sm" /> Загрузка...
+                  </>
+                ) : (
+                  'Нет пользователей'
+                )}
+              </td>
+            </tr>
+          ) : (
+            currentPageUsers.map((user) => (
+              <tr key={user.id}>
+                <td>
+                  <img src={user.picture} alt="Пользователь" width="50" />
+                </td>
+                <td>{user.gender}</td>
+                <td>{user.first_name}</td>
+                <td>{user.last_name}</td>
+                <td>{user.email}</td>
+                <td>{user.phone}</td>
+                <td>{user.location}</td>
+                <td>
+                  <Link
+                    to={`/user/${user.id}?fromPage=${page}`}
+                    style={{ textDecoration: 'none' }}
+                  >
+                    Просмотр
+                  </Link>
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </Table>
+
+      <Pagination className="justify-content-center">{getPaginationItems()}</Pagination>
+    </div>
+  );
 };
 
 export default MainPage;
