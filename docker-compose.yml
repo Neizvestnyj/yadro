@@ -9,7 +9,7 @@ services:
       - "8000:8000"
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:1234@db:5432/randomuser_db
-    command: bash -c "sleep 5 && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
     depends_on:
       db:
         condition: service_healthy
@@ -35,6 +35,23 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    command: npm start
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # Сохраняем node_modules в контейнере
+    depends_on:
+      - app
+    environment:
+      - CHOKIDAR_USEPOLLING=true # Для горячей перезагрузки в Docker
+    networks:
+      - app-network
 
 volumes:
   db_data:
