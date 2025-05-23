@@ -1,5 +1,5 @@
 # RandomUser API Application
-
+[![Coverage Status](https://coveralls.io/repos/github/your-username/your-repo-name/badge.svg?branch=master)](https://coveralls.io/github/your-username/your-repo-name?branch=master)
 Backend-часть приложения для работы с API randomuser.me
 
 ## Технологический стек
@@ -17,7 +17,7 @@ Backend-часть приложения для работы с API randomuser.me
 1. Установите зависимости:
 
 ```bash
-pip install -r requirements.txt
+poetry install --with dev
 ```
 
 2. Создайте и настройте БД PostgreSQL:

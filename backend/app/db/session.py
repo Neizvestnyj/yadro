@@ -13,10 +13,7 @@ from app.db.models import Base
 class DatabaseManager:
     """Базовый класс для управления подключением к базе данных."""
 
-    def __init__(
-            self,
-            url: str = None,
-    ) -> None:
+    def __init__(self, url: str = None) -> None:
         """
         Инициализирует подключение к базе данных PostgreSQL.
 
@@ -89,7 +86,6 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 if __name__ == "__main__":
     import asyncio
-
 
     async def initialize() -> None:
         """Инициализация базы данных."""

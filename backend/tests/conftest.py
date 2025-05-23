@@ -12,15 +12,15 @@ from app.db.session import get_db as get_session
 from app.main import app
 
 
-@pytest.fixture(scope='session')
-def anyio_backend() -> Literal['asyncio']:
+@pytest.fixture(scope="session")
+def anyio_backend() -> Literal["asyncio"]:
     """
     Указывает бэкенд для асинхронных тестов.
 
     :returns: Название асинхронного бэкенда.
     :rtype: Literal['asyncio']
     """
-    return 'asyncio'
+    return "asyncio"
 
 
 @pytest.fixture
@@ -33,13 +33,11 @@ async def async_client(async_session: AsyncSession) -> AsyncGenerator[AsyncClien
     :returns: Асинхронный тестовый клиент FastAPI.
     :rtype: AsyncGenerator[AsyncClient, None]
     """
-    with patch('app.main.fetch_and_save_users', new_callable=AsyncMock) as _:
+    with patch("app.main.fetch_and_save_users", new_callable=AsyncMock) as _:
         app.dependency_overrides[get_session] = lambda: async_session
         _transport = ASGITransport(app=app)
 
-        async with AsyncClient(
-                transport=_transport, base_url='http://test', follow_redirects=True
-        ) as client:
+        async with AsyncClient(transport=_transport, base_url="http://test", follow_redirects=True) as client:
             yield client
 
         app.dependency_overrides.clear()
@@ -53,7 +51,7 @@ async def async_session() -> AsyncGenerator[AsyncSession, None]:
     :returns: Асинхронная сессия базы данных.
     :rtype: AsyncGenerator[AsyncSession, None]
     """
-    async_engine  = create_async_engine(settings.SQLALCHEMY_TEST_DATABASE_URL)
+    async_engine = create_async_engine(settings.SQLALCHEMY_TEST_DATABASE_URL)
 
     # Создаем и очищаем тестовые таблицы
     async with async_engine.begin() as conn:

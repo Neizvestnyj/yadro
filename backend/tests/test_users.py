@@ -113,14 +113,8 @@ async def test_update_user(async_session: AsyncSession, async_client: AsyncClien
     user = await create_user(async_session, user_data)
 
     # Обновляем пользователя
-    update_data = {
-        "first_name": "Updated",
-        "email": "updated@example.com"
-    }
-    response = await async_client.put(
-        f"/v1/users/{user.id}",
-        json=update_data
-    )
+    update_data = {"first_name": "Updated", "email": "updated@example.com"}
+    response = await async_client.put(f"/v1/users/{user.id}", json=update_data)
     assert response.status_code == 200
     updated_user = response.json()
     assert updated_user["first_name"] == "Updated"
@@ -177,8 +171,10 @@ async def test_fetch_users_from_api(async_client: AsyncClient, respx_mock: MockR
                 "gender": "male",
                 "phone": "1234567890",
                 "location": {"city": "Mock City", "country": "Mock Country"},
-                "picture": {"large": "http://example.com/pic1.jpg",
-                            "thumbnail": "http://example.com/pic2.jpg", }
+                "picture": {
+                    "large": "http://example.com/pic1.jpg",
+                    "thumbnail": "http://example.com/pic2.jpg",
+                },
             },
             {
                 "name": {"first": "Mocked", "last": "User2"},
@@ -186,10 +182,8 @@ async def test_fetch_users_from_api(async_client: AsyncClient, respx_mock: MockR
                 "gender": "female",
                 "phone": "0987654321",
                 "location": {"city": "Mock City", "country": "Mock Country"},
-                "picture": {"large": "http://example.com/pic2.jpg",
-                            "thumbnail": "http://example.com/pic2.jpg"
-                            }
-            }
+                "picture": {"large": "http://example.com/pic2.jpg", "thumbnail": "http://example.com/pic2.jpg"},
+            },
         ]
     }
 

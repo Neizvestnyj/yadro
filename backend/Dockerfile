@@ -2,8 +2,11 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY pyproject.toml poetry.lock /app/
 
-RUN pip install -r requirements.txt
+RUN pip install poetry
 
-COPY . .
+RUN poetry config virtualenvs.create false \
+ && poetry install --no-root
+
+COPY . /app/

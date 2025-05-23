@@ -40,17 +40,28 @@ jobs:
           - 5432:5432
     env:
       DATABASE_URL: postgresql+asyncpg://postgres:1234@test_db:5432/test_randomuser_db
+      COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
+      - name: Install Poetry
+        run: |
+          pip install poetry
+          poetry config virtualenvs.create false
+
       - name: Install dependencies
         run: |
           cd backend
-          pip install -r requirements.txt
-      - name: Run tests
+          poetry install --with dev
+
+      - name: Run tests with coverage
         run: |
           cd backend
-          pytest tests -v
+          poetry run coverage run -m pytest
+          poetry run coverage report
+          poetry run coveralls
