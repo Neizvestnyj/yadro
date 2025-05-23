@@ -1,7 +1,10 @@
+from asyncpg.exceptions import UniqueViolationError
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import func
 
+from app.core.logging import logger
 from app.db.crud.users import create_user, delete_user, get_user, get_users, update_user
 from app.db.models.user import User
 from app.schemas.user import UserCreate, UserOut, UserUpdate
@@ -26,17 +29,47 @@ async def fetch_and_save_users(db: AsyncSession, count: int) -> list[UserOut]:
     users_data: dict = await fetch_random_users(count)  # Получаем данные пользователей из randomuser.me.
     users: list[UserOut] = []
     for user_data in users_data["results"]:
-        user: UserCreate = UserCreate(
-            gender=user_data["gender"],
-            first_name=user_data["name"]["first"],
-            last_name=user_data["name"]["last"],
-            phone=user_data["phone"],
-            email=user_data["email"],
-            location=f"{user_data['location']['city']}, {user_data['location']['country']}",
-            picture=user_data["picture"]["thumbnail"],
-        )
-        db_user: UserOut = await create_user(db, user)
-        users.append(db_user)
+        try:
+            user = UserCreate(
+                gender=user_data["gender"],
+                title=user_data["name"]["title"],
+                first_name=user_data["name"]["first"],
+                last_name=user_data["name"]["last"],
+                street_number=user_data["location"]["street"]["number"],
+                street_name=user_data["location"]["street"]["name"],
+                city=user_data["location"]["city"],
+                state=user_data["location"]["state"],
+                country=user_data["location"]["country"],
+                postcode=str(user_data["location"]["postcode"]),
+                latitude=float(user_data["location"]["coordinates"]["latitude"]),
+                longitude=float(user_data["location"]["coordinates"]["longitude"]),
+                timezone_offset=user_data["location"]["timezone"]["offset"],
+                phone=user_data["phone"],
+                cell=user_data["cell"],
+                email=user_data["email"],
+                external_id=user_data["id"]["value"],
+                username=user_data["login"]["username"],
+                uuid=user_data["login"]["uuid"],
+                picture=user_data["picture"]["thumbnail"],
+                dob=user_data["dob"]["date"],
+                registered_at=user_data["registered"]["date"],
+                nat=user_data["nat"],
+            )
+            db_user: UserOut = await create_user(db, user)
+            users.append(db_user)
+        except IntegrityError as e:
+            await db.rollback()
+
+            error_msg = str(e.orig)
+            if "email" in error_msg:
+                logger.warning(f"Duplicate email detected: {user_data['email']}")
+            elif "username" in error_msg:
+                logger.warning(f"Duplicate username detected: {user_data['username']}")
+            elif "uuid" in error_msg:
+                logger.warning(f"Duplicate UUID detected: {user_data['uuid']}")
+            else:
+                logger.error(f"Database integrity error: {e}")
+                raise
     return users
 
 
