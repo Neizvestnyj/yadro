@@ -21,7 +21,7 @@ const MainPage = () => {
     const [isFetching, setIsFetching] = useState(false);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [hasMore, setHasMore] = useState(true);
-    const [error, setError] = useState(''); // Состояние для ошибки
+    const [error, setError] = useState('');
     const limit = 10;
     const bufferSize = 200;
     const fetchSize = 50;
@@ -52,7 +52,7 @@ const MainPage = () => {
             return response.data;
         } catch (error) {
             console.error('Ошибка:', error);
-            setError('Ошибка при загрузке пользователей. Попробуйте снова.');
+            setError('Ошибка при загрузке пользователей.');
             return [];
         }
     };
@@ -85,10 +85,10 @@ const MainPage = () => {
      */
     const handleFetchUsers = async () => {
         if (!count || parseInt(count, 10) <= 0) {
-            setError('Количество пользователей должно быть больше 0');
+            setError('Количество должно быть больше 0');
             return;
         }
-        setError(''); // Очищаем ошибку перед загрузкой
+        setError('');
         setIsFetching(true);
         try {
             await axios.post(`http://localhost:8000/v1/users/fetch?count=${count}`);
@@ -106,7 +106,7 @@ const MainPage = () => {
             console.log('Инициализировано:', newUsers.length);
         } catch (error) {
             console.error('Ошибка API:', error);
-            setError('Ошибка при загрузке пользователей из API. Попробуйте снова.');
+            setError('Ошибка загрузки из API.');
         } finally {
             setIsFetching(false);
         }
@@ -175,26 +175,28 @@ const MainPage = () => {
     const getPaginationItems = () => {
         const items = [];
         const maxPagesToShow = 5;
-        const totalAvailablePages = Math.ceil(users.length / limit);
-        const maxPage = hasMore ? Math.max(page + maxPagesToShow, totalAvailablePages) : totalPages;
+        const maxPage = Math.max(totalPages, Math.ceil(users.length / limit));
 
+        // Кнопка "в начало"
         items.push(
             <Pagination.Item key="first" disabled={page === 1} onClick={() => setPage(1)}>
                 ««
             </Pagination.Item>
         );
 
+        // Кнопка "назад на 5 страниц"
         items.push(
             <Pagination.Item
                 key="rewind-back"
-                disabled={page <= maxPagesToShow}
+                disabled={page <= 1}
                 onClick={() => setPage(Math.max(1, page - maxPagesToShow))}
             >
                 «
             </Pagination.Item>
         );
 
-        const startPage = Math.max(1, page - Math.floor(maxPagesToShow / 2));
+        // Страницы
+        const startPage = Math.max(1, Math.min(page - Math.floor(maxPagesToShow / 2), maxPage - maxPagesToShow + 1));
         const endPage = Math.min(maxPage, startPage + maxPagesToShow - 1);
         for (let i = startPage; i <= endPage; i++) {
             items.push(
@@ -204,9 +206,13 @@ const MainPage = () => {
             );
         }
 
-        if (hasMore || page + maxPagesToShow <= totalPages) {
+        // Кнопка "вперёд на 5 страниц"
+        if (page < maxPage) {
             items.push(
-                <Pagination.Item key="rewind-forward" onClick={() => setPage(page + maxPagesToShow)}>
+                <Pagination.Item
+                    key="rewind-forward"
+                    onClick={() => setPage(Math.min(maxPage, page + maxPagesToShow))}
+                >
                     »
                 </Pagination.Item>
             );
@@ -307,7 +313,9 @@ const MainPage = () => {
                 </tbody>
             </Table>
 
-            <Pagination className="justify-content-center">{getPaginationItems()}</Pagination>
+            {totalPages > 0 && (
+                <Pagination className="justify-content-center">{getPaginationItems()}</Pagination>
+            )}
         </div>
     );
 };
