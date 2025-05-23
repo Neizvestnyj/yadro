@@ -55,13 +55,22 @@ const UserPage = () => {
                         {user.first_name} {user.last_name}
                     </Card.Title>
                     <Card.Text>
-                        <strong>Пол:</strong> {user.gender}
-                        <br/>
-                        <strong>Email:</strong> {user.email}
-                        <br/>
-                        <strong>Телефон:</strong> {user.phone}
-                        <br/>
-                        <strong>Местоположение:</strong> {user.location}
+                        <strong>Титул:</strong> {user.title}<br/>
+                        <strong>Пол:</strong> {user.gender}<br/>
+                        <strong>Email:</strong> {user.email}<br/>
+                        <strong>Телефон:</strong> {user.phone}<br/>
+                        <strong>Мобильный:</strong> {user.cell}<br/>
+                        <strong>Адрес:</strong> {user.street_number} {user.street_name}, {user.city}, {user.state}, {user.country}, {user.postcode}<br/>
+                        <strong>Координаты:</strong> Широта: {user.latitude}, Долгота: {user.longitude}<br/>
+                        <strong>Часовой пояс:</strong> {user.timezone_offset}<br/>
+                        <strong>Внешний ID:</strong> {user.external_id}<br/>
+                        <strong>Имя пользователя:</strong> {user.username}<br/>
+                        <strong>UUID:</strong> {user.uuid}<br/>
+                        <strong>Дата рождения:</strong> {new Date(user.dob).toLocaleDateString()}<br/>
+                        <strong>Дата регистрации:</strong> {new Date(user.registered_at).toLocaleDateString()}<br/>
+                        <strong>Национальность:</strong> {user.nat}<br/>
+                        <strong>ID:</strong> {user.id}<br/>
+                        <strong>Создано:</strong> {new Date(user.created_at).toLocaleDateString()}
                     </Card.Text>
                     <Button as={Link} to={`/?page=${fromPage}`} variant="primary">
                         Назад на главную
