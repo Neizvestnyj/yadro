@@ -1,6 +1,6 @@
 # RandomUser API Application
 
-Веб-приложение для работы с API randomuser.me с пагинацией и детальной информацией о пользователях.
+Веб-приложение для работы с API randomuser.me с пагинацией и детальной информацией о пользователях. [![Coverage Status](https://coveralls.io/repos/github/Neizvestnyj/yadro/badge.svg?branch=master)](https://coveralls.io/github/Neizvestnyj/yadro?branch=master)
 
 ## 🛠 Технологический стек
 
