@@ -9,7 +9,9 @@ services:
       - "8000:8000"
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:1234@db:5432/randomuser_db
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+    command: >
+      sh -c "alembic upgrade head && 
+      uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"
     depends_on:
       db:
         condition: service_healthy
@@ -27,7 +29,7 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5433:5432"
     networks:
       - app-network
     healthcheck:
