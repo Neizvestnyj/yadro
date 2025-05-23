@@ -69,7 +69,7 @@ async def fetch_and_save_users(db: AsyncSession, count: int) -> list[UserOut]:
                 logger.warning(f"Duplicate UUID detected: {user_data['uuid']}")
             else:
                 logger.error(f"Database integrity error: {e}")
-                raise
+            continue
     return users
 
 
