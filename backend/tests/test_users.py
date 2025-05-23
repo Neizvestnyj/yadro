@@ -76,7 +76,7 @@ async def test_get_user_by_id(async_session: AsyncSession, async_client: AsyncCl
         email="original@example.com",
         gender="male",
         phone="1234567890",
-        location="Test Location",
+        city="Test city",
         picture="http://example.com/pic.jpg",
     )
     user = await create_user(async_session, user_data)
@@ -166,23 +166,75 @@ async def test_fetch_users_from_api(async_client: AsyncClient, respx_mock: MockR
     mock_users = {
         "results": [
             {
-                "name": {"first": "Mocked", "last": "User1"},
-                "email": "mocked1@example.com",
-                "gender": "male",
-                "phone": "1234567890",
-                "location": {"city": "Mock City", "country": "Mock Country"},
-                "picture": {
-                    "large": "http://example.com/pic1.jpg",
-                    "thumbnail": "http://example.com/pic2.jpg",
+                "gender": "female",
+                "name": {"title": "Miss", "first": "Jennie", "last": "Nichols"},
+                "location": {
+                    "street": {
+                        "number": 8929,
+                        "name": "Valwood Pkwy",
+                    },
+                    "city": "Billings",
+                    "state": "Michigan",
+                    "country": "United States",
+                    "postcode": "63104",
+                    "coordinates": {"latitude": "-69.8246", "longitude": "134.8719"},
+                    "timezone": {"offset": "+9:30", "description": "Adelaide, Darwin"},
                 },
+                "email": "jennie.nichols@example.com",
+                "login": {
+                    "uuid": "7a0eed16-9430-4d68-901f-c0d4c1c3bf00",
+                    "username": "yellowpeacock117",
+                    "password": "addison",
+                    "salt": "sld1yGtd",
+                    "md5": "ab54ac4c0be9480ae8fa5e9e2a5196a3",
+                    "sha1": "edcf2ce613cbdea349133c52dc2f3b83168dc51b",
+                    "sha256": "48df5229235ada28389b91e60a935e4f9b73eb4bdb855ef9258a1751f10bdc5d",
+                },
+                "dob": {"date": "1992-03-08T15:13:16.688Z", "age": 30},
+                "registered": {"date": "2007-07-09T05:51:59.390Z", "age": 14},
+                "phone": "(272) 790-0888",
+                "cell": "(489) 330-2385",
+                "id": {"name": "SSN", "value": "405-88-3636"},
+                "picture": {
+                    "large": "https://randomuser.me/api/portraits/men/75.jpg",
+                    "medium": "https://randomuser.me/api/portraits/med/men/75.jpg",
+                    "thumbnail": "https://randomuser.me/api/portraits/thumb/men/75.jpg",
+                },
+                "nat": "US",
             },
             {
-                "name": {"first": "Mocked", "last": "User2"},
-                "email": "mocked2@example.com",
-                "gender": "female",
-                "phone": "0987654321",
-                "location": {"city": "Mock City", "country": "Mock Country"},
-                "picture": {"large": "http://example.com/pic2.jpg", "thumbnail": "http://example.com/pic2.jpg"},
+                "gender": "male",
+                "name": {"title": "Mr", "first": "Liam", "last": "Griffin"},
+                "location": {
+                    "street": {"number": 4023, "name": "Hickory Lane"},
+                    "city": "Cedar Rapids",
+                    "state": "Iowa",
+                    "country": "United States",
+                    "postcode": "52404",
+                    "coordinates": {"latitude": "42.0097", "longitude": "-91.6441"},
+                    "timezone": {"offset": "-6:00", "description": "Central Time (US & Canada)"},
+                },
+                "email": "liam.griffin@example.com",
+                "login": {
+                    "uuid": "a3f5f8e7-8b91-4a13-a987-3baf49c1a4e1",
+                    "username": "brownkoala284",
+                    "password": "matrix42",
+                    "salt": "N7dH2Ztr",
+                    "md5": "bd7b3a27a10a66304d4e6bbbaaa34c67",
+                    "sha1": "e042cd1b4f83ac09b0d8e326fcfbb07ad3f31989",
+                    "sha256": "b8746bb6801c6ea8e546a67a6dd9f1a46cf12b1f470ef51b84b5738396f3b6cd",
+                },
+                "dob": {"date": "1985-11-23T09:44:00.000Z", "age": 39},
+                "registered": {"date": "2010-06-15T11:32:45.000Z", "age": 14},
+                "phone": "(303) 555-0132",
+                "cell": "(303) 555-0198",
+                "id": {"name": "SSN", "value": "123-45-6789"},
+                "picture": {
+                    "large": "https://randomuser.me/api/portraits/men/45.jpg",
+                    "medium": "https://randomuser.me/api/portraits/med/men/45.jpg",
+                    "thumbnail": "https://randomuser.me/api/portraits/thumb/men/45.jpg",
+                },
+                "nat": "US",
             },
         ]
     }
@@ -198,5 +250,8 @@ async def test_fetch_users_from_api(async_client: AsyncClient, respx_mock: MockR
     users_response = await async_client.get("/v1/users?limit=2&offset=0")
     users = users_response.json()
     assert len(users) == 2
-    assert users[0]["first_name"] == "Mocked"
-    assert users[0]["email"] in ["mocked1@example.com", "mocked2@example.com"]
+    assert users[0]["first_name"] == "Jennie"
+    assert users[0]["email"] in 'jennie.nichols@example.com'
+
+    assert users[1]["first_name"] == "Liam"
+    assert users[1]["email"] in 'liam.griffin@example.com'
