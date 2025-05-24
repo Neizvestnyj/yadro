@@ -604,7 +604,7 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{job=\"docker-logs\"}",
+          "expr": "{job=\"fastapi\"}",
           "hide": false,
           "queryType": "range",
           "refId": "A"
@@ -671,5 +671,5 @@
   "timezone": "",
   "title": "Backend",
   "uid": "fastapi-observability",
-  "version": 3
+  "version": 2
 }

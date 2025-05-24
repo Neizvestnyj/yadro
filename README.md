@@ -70,6 +70,7 @@
 ### Docker-запуск
 
 ```bash
+docker plugin install grafana/loki-docker-driver:latest --alias loki --grant-all-permissions
 docker-compose up -d --build
 ```
 
@@ -99,13 +100,31 @@ pytest tests/ -v
 - Интеграционные тесты API
 - Моки внешнего API
 
+### Проверка доступности контейнеров с метриками
+```shell
+# ready
+curl http://localhost:3100/ready
+
+curl http://localhost:9090/targets
+
+curl http://localhost:8000/metrics
+```
+
 ## 🔍 Документация
 
 - Swagger UI: [http://localhost:8000/docs](http://localhost:8000/docs)
 
-## Мониторинг
+## 📊 Мониторинг с Grafana Dashboard
+
+1. Откройте Grafana: [http://localhost:3000](http://localhost:3000)
+   - Логин: `admin`
+   - Пароль: `admin`
+
+2. Импортируйте дашборд:
+   Dashboards → New → Import → Upload JSON файла [Backend-dashboard.json](backend/monitoring/grafana/Backend-dashboard.json)
+
 - **Prometheus**: Собирает метрики FastAPI (`http://localhost:8000/metrics`).
-- **Loki/Promtail**: Собирает JSON-логи приложения.
+- **Loki**: Собирает JSON-логи приложения.
 - **Grafana**: Визуализирует метрики и логи (`http://localhost:3000`).
 
 ## ✨ Особенности

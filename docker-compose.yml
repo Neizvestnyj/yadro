@@ -1,19 +1,6 @@
 version: '3.8'
 
 services:
-  promtail:
-    image: grafana/promtail:latest
-    container_name: promtail
-    ports:
-      - "9080:9080"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - ./backend/monitoring/promtail-config.yaml:/etc/promtail/promtail.yaml:ro
-    command: -config.file=/etc/promtail/promtail.yaml
-    networks:
-      - app-network
-
   loki:
     image: grafana/loki:latest
     container_name: loki
@@ -21,6 +8,7 @@ services:
       - "3100:3100"
     volumes:
       - ./backend/monitoring/loki-config.yaml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
     networks:
       - app-network
 
@@ -73,10 +61,20 @@ services:
     networks:
       - app-network
     logging:
-      driver: json-file  # Promtail будет собирать эти логи
+      driver: loki
       options:
-        max-size: "10m"
-        max-file: "3"
+        # Адрес Loki, куда складывать логи
+        # Обратите внимание, что здесь используется не имя сервиса loki, а локальный хост, на который проброшен порт Loki,
+        # это сделано потому, что логи будет писать docker engine, который расположен на хостовой машине,
+        # и он не знает имени хоста контейнера Loki, которое ему присвоил compose во внутренней сети проекта.
+        loki-url: "http://localhost:3100/loki/api/v1/push"
+        loki-batch-size: "100"
+        loki-retries: 2
+        loki-max-backoff: 1000ms
+        loki-timeout: 1s
+        mode: non-blocking
+        max-buffer-size: 4m
+        loki-external-labels: "container_name={{.Name}},job=fastapi"
 
   db:
     image: postgres:17
@@ -96,6 +94,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+  #    logging:
+  #      driver: loki
+  #      options:
+  #        loki-url: "http://loki:3100/loki/api/v1/push"
+  #        loki-external-labels: "container_name={{.Name}},job=postgres"
 
   frontend:
     build:
@@ -114,10 +117,28 @@ services:
     networks:
       - app-network
 
+#  cadvisor:
+#    image: gcr.io/cadvisor/cadvisor:latest
+#    container_name: cadvisor
+#    ports:
+#      - "8080:8080"
+#    volumes:
+#      - /var/run:/var/run:ro
+#      - /sys:/sys:ro
+#      - /var/lib/docker/:/var/lib/docker:ro
+#    networks:
+#      - app-network
+#    logging:
+#      driver: loki
+#      options:
+#        loki-url: "http://loki:3100/loki/api/v1/push"
+#        loki-external-labels: "container_name={{.Name}},job=cadvisor"
+
 volumes:
   db_data:
   grafanadata:
   prometheusdata:
+  loki_data:
 
 networks:
   app-network:
