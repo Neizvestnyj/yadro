@@ -186,7 +186,6 @@ class UserOut(UserBase):
     id: int
     created_at: datetime
 
-    class Config:
-        """Конфигурация Pydantic для включения режима работы с ORM."""
-
-        from_attributes = True
+    model_config = {
+        "from_attributes": True
+    }

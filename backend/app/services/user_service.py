@@ -54,8 +54,8 @@ async def fetch_and_save_users(db: AsyncSession, count: int) -> list[UserOut]:
                 registered_at=user_data["registered"]["date"],
                 nat=user_data["nat"],
             )
-            db_user: UserOut = await create_user(db, user)
-            users.append(db_user)
+            user_out: UserOut = await create_user(db, user)
+            users.append(user_out)
         except IntegrityError as e:
             await db.rollback()
 

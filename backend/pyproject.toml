@@ -24,7 +24,9 @@ python-dotenv = "^1.0.1"
 asyncpg = "^0.30.0"
 tenacity = "^9.0.0"
 aiofiles = "^24.1.0"
-pydantic = {extras = ["email"], version = "^2.11.5"}
+pydantic = { extras = ["email"], version = "^2.11.5" }
+prometheus-fastapi-instrumentator = "^7.1.0"
+python-json-logger = "^3.3.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.5"
