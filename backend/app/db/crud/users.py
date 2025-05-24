@@ -2,10 +2,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app.db.models.user import User
-from app.schemas.user import UserCreate, UserUpdate
+from app.schemas.user import UserCreate, UserOut, UserUpdate
 
 
-async def create_user(db: AsyncSession, user: UserCreate) -> User:
+async def create_user(db: AsyncSession, user: UserCreate) -> UserOut:
     """
     Создает нового пользователя в базе данных.
 
@@ -20,7 +20,8 @@ async def create_user(db: AsyncSession, user: UserCreate) -> User:
     db.add(db_user)
     await db.commit()
     await db.refresh(db_user)
-    return db_user
+    user_out = UserOut.model_validate(db_user)
+    return user_out
 
 
 async def get_users(db: AsyncSession, limit: int, offset: int) -> list[User]:

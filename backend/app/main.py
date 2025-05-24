@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator, metrics
 
 from app.api.v1 import random, users
 from app.core.logging import logger
@@ -44,11 +45,15 @@ app.include_router(random.router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://frontend:3000"],
+    allow_origins=["http://localhost:3000", "http://frontend:3000", "http://localhost:3001", "http://frontend:3001"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Настройка Prometheus с кастомным именем метрики
+instrumentator = Instrumentator()
+instrumentator.instrument(app,  metric_namespace="fastapi").expose(app, endpoint="/metrics")
 
 if __name__ == "__main__":
     import uvicorn
