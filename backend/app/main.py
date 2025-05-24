@@ -1,9 +1,11 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from typing import Awaitable, Callable
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from prometheus_fastapi_instrumentator import Instrumentator, metrics
+from prometheus_client import Gauge
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.api.v1 import random, users
 from app.core.logging import logger
@@ -53,7 +55,33 @@ app.add_middleware(
 
 # Настройка Prometheus с кастомным именем метрики
 instrumentator = Instrumentator()
-instrumentator.instrument(app,  metric_namespace="fastapi").expose(app, endpoint="/metrics")
+
+inprogress_requests = Gauge("fastapi_http_requests_in_progress", "Number of in-progress HTTP requests")
+
+@app.middleware("http")
+async def track_inprogress_requests(
+    request: Request,
+    call_next: Callable[[Request], Awaitable[Response]]
+) -> Response | None:
+    """
+    Middleware для подсчёта текущих обрабатываемых HTTP-запросов.
+
+    :param request: Объект запроса FastAPI.
+    :param call_next: Функция для вызова следующего обработчика в цепочке middleware.
+    :return: Объект ответа FastAPI.
+
+    Увеличивает счётчик метрики `fastapi_http_requests_in_progress` при начале обработки запроса
+    и уменьшает при завершении (независимо от результата).
+    """
+    inprogress_requests.inc()
+    try:
+        response = await call_next(request)
+        return response
+    finally:
+        inprogress_requests.dec()
+
+
+instrumentator.instrument(app, metric_namespace="fastapi").expose(app, endpoint="/metrics")
 
 if __name__ == "__main__":
     import uvicorn

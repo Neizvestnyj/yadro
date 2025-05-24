@@ -1,10 +1,63 @@
 version: '3.8'
 
 services:
-  app:
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    ports:
+      - "9080:9080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./backend/monitoring/promtail-config.yaml:/etc/promtail/promtail.yaml:ro
+    command: -config.file=/etc/promtail/promtail.yaml
+    networks:
+      - app-network
+
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./backend/monitoring/loki-config.yaml:/etc/loki/local-config.yaml:ro
+    networks:
+      - app-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./backend/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheusdata:/prometheus
+    networks:
+      - app-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./backend/monitoring/grafana/grafana.ini:/etc/grafana/grafana.ini:ro
+      - ./backend/monitoring/grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
+      - grafanadata:/var/lib/grafana
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - app-network
+
+  backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    container_name: yadro_backend
     ports:
       - "8000:8000"
     environment:
@@ -19,9 +72,15 @@ services:
       - ./backend:/app
     networks:
       - app-network
+    logging:
+      driver: json-file  # Promtail будет собирать эти логи
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   db:
     image: postgres:17
+    container_name: yadro_db
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=1234
@@ -43,20 +102,22 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3001:3000"
     command: npm start
     volumes:
       - ./frontend:/app
-      - /app/node_modules # Сохраняем node_modules в контейнере
+      - /app/node_modules
     depends_on:
-      - app
+      - backend
     environment:
-      - CHOKIDAR_USEPOLLING=true # Для горячей перезагрузки в Docker
+      - CHOKIDAR_USEPOLLING=true
     networks:
       - app-network
 
 volumes:
   db_data:
+  grafanadata:
+  prometheusdata:
 
 networks:
   app-network:
