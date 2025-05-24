@@ -1,3 +1,4 @@
+from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -56,6 +57,11 @@ async def fetch_and_save_users(db: AsyncSession, count: int) -> list[UserOut]:
             )
             user_out: UserOut = await create_user(db, user)
             users.append(user_out)
+        except ValidationError as e:
+            await db.rollback()
+
+            logger.warning(f"Value is not a valid email address {user_data['email']}: {e}")
+            continue
         except IntegrityError as e:
             await db.rollback()
 
