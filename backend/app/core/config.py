@@ -24,6 +24,17 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=str(ENV_PATH), env_file_encoding="utf-8")
 
+    @property
+    def DATABASE_URL_SYNC(self) -> str:  # noqa: N802
+        """
+        Возвращает синхронный URL подключения к базе данных, заменяя драйвер ``asyncpg`` на ``psycopg2``.
+
+        :return: Строка с URL базы данных, пригодным для использования с синхронным SQLAlchemy-движком (например, в Alembic).
+        :rtype: str
+        """
+        return self.DATABASE_URL.replace("asyncpg", "psycopg2")
+
+
 
 settings: Settings = Settings()
 logger.info(f"{settings.__dict__}")
