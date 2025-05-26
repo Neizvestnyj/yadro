@@ -1,7 +1,7 @@
 from typing import Any
 
-from httpx import AsyncClient, Response
 import pytest
+from httpx import AsyncClient, Response
 from respx import MockRouter
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -251,7 +251,7 @@ async def test_fetch_users_from_api(async_client: AsyncClient, respx_mock: MockR
     users = users_response.json()
     assert len(users) == 2
     assert users[0]["first_name"] == "Jennie"
-    assert users[0]["email"] in 'jennie.nichols@example.com'
+    assert users[0]["email"] in "jennie.nichols@example.com"
 
     assert users[1]["first_name"] == "Liam"
-    assert users[1]["email"] in 'liam.griffin@example.com'
+    assert users[1]["email"] in "liam.griffin@example.com"

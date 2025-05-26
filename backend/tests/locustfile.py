@@ -5,6 +5,7 @@ from locust.clients import Response
 
 MAX_OFFSET = MAX_USER_ID = 10000
 
+
 class GetUsersUser(HttpUser):
     """
     Locust user для тестирования GET /v1/users.
@@ -28,9 +29,7 @@ class GetUsersUser(HttpUser):
         """
         limit = random.choice([10, 50, 100])
         offset = random.randrange(0, MAX_OFFSET, limit)
-        with self.client.get(
-            "/v1/users", params={"limit": limit, "offset": offset}, catch_response=True
-        ) as resp:
+        with self.client.get("/v1/users", params={"limit": limit, "offset": offset}, catch_response=True) as resp:
             if resp.status_code != 200:
                 resp.failure(f"Expected 200, got {resp.status_code}")
             elif not isinstance(resp.json(), list):
@@ -106,11 +105,7 @@ class PutUser(HttpUser):
         :rtype: Response
         """
         user_id = random.randint(1, MAX_USER_ID)
-        json_data = {
-            "first_name": f"Test_{user_id}",
-            "last_name": "Updated",
-            "email": f"test_{user_id}@example.com"
-        }
+        json_data = {"first_name": f"Test_{user_id}", "last_name": "Updated", "email": f"test_{user_id}@example.com"}
         with self.client.put(f"/v1/users/{user_id}", json=json_data, catch_response=True) as resp:
             if resp.status_code not in (200, 404):
                 resp.failure(f"Expected 200 or 404, got {resp.status_code}")

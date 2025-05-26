@@ -41,7 +41,6 @@ class Settings(BaseSettings):
         return self.DATABASE_URL.replace("asyncpg", "psycopg2")
 
 
-
 settings: Settings = Settings()
 logger.info(f"{settings.__dict__}")
 

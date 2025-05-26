@@ -7,6 +7,7 @@ from app.core.logging import logger
 
 JsonType = dict | list | str | int | float | bool
 
+
 class RedisCache:
     """Клиент для работы с Redis."""
 

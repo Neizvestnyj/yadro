@@ -91,5 +91,4 @@ if __name__ == "__main__":
         """Инициализация базы данных."""
         await db_manager.connect()
 
-
     asyncio.run(initialize())

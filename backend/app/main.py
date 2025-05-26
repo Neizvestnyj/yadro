@@ -59,10 +59,10 @@ instrumentator = Instrumentator()
 
 inprogress_requests = Gauge("fastapi_http_requests_in_progress", "Number of in-progress HTTP requests")
 
+
 @app.middleware("http")
 async def track_inprogress_requests(
-    request: Request,
-    call_next: Callable[[Request], Awaitable[Response]]
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
 ) -> Response | None:
     """
     Middleware для подсчёта текущих обрабатываемых HTTP-запросов.

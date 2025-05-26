@@ -2,8 +2,8 @@ from collections.abc import AsyncGenerator
 from typing import Literal
 from unittest.mock import AsyncMock, patch
 
-from httpx import ASGITransport, AsyncClient
 import pytest
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.config import settings
