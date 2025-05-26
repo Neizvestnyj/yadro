@@ -26,7 +26,6 @@ tenacity = "^9.0.0"
 aiofiles = "^24.1.0"
 pydantic = { extras = ["email"], version = "^2.11.5" }
 prometheus-fastapi-instrumentator = "^7.1.0"
-python-json-logger = "^3.3.0"
 psycopg2 = "^2.9.10"
 
 [tool.poetry.group.dev.dependencies]
@@ -37,6 +36,7 @@ ruff = "^0.11.10"
 gevent = "^24.11.1"
 pytest-cov = "^5.0.0"
 coveralls = { version = "^4.0.1", markers = "python_version < '3.13'" }
+locust = "^2.37.5"
 
 [build-system]
 requires = ["poetry-core"]

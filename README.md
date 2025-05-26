@@ -19,7 +19,7 @@
 
 - Python 3.11+
 - PostgreSQL 16+
-- Node.js 16+
+- Node.js 18+
 - Docker
 
 ## 🚀 Запуск приложения
@@ -27,14 +27,15 @@
 ### Локальный запуск
 
 1. Клонируйте репозиторий:
-   ```bash
+   ```shell
    git clone https://github.com/Neizvestnyj/yadro.git
    cd yadro
    ```
 
-2. Установите зависимости:
-   ```bash
+2. Установите зависимости [backend](backend)/[frontend](frontend):
+   ```shell
    # Бэкенд
+   pip install poetry
    poetry install --with dev
    
    # Фронтенд
@@ -42,22 +43,22 @@
    ```
 
 3. Настройте БД:
-   ```bash
+   ```shell
    createdb randomuser_db
    ```
 
-4. Создайте `.env` файл:
+4. Создайте `.env` файл *(не обязательно)*:
    ```env
    DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/randomuser_db
    ```
 
 5. Примените миграции:
-   ```bash
+   ```shell
    alembic upgrade head
    ```
 
 6. Запустите серверы:
-   ```bash
+   ```shell
    # Бэкенд
    uvicorn app.main:app --reload
    
@@ -69,7 +70,7 @@
 
 ### Docker-запуск
 
-```bash
+```shell
 docker plugin install grafana/loki-docker-driver:latest --alias loki --grant-all-permissions
 docker-compose up -d --build
 ```
@@ -90,15 +91,16 @@ docker-compose up -d --build
 
 ## 🧪 Тестирование
 
-```bash
+### Интеграционные тесты
+```shell
 pytest tests/ -v
 ```
 
-Тесты включают:
-
-- Модульные тесты сервисов
-- Интеграционные тесты API
-- Моки внешнего API
+### Нагрузочное тестирование
+```shell
+locust -f tests/locustfile.py --host=http://localhost:8000 --users 50 --spawn-rate 10 --headless --run-time 1m
+```
+247 RPS
 
 ### Проверка доступности контейнеров с метриками
 ```shell
