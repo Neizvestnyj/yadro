@@ -80,7 +80,7 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum(fastapi_http_requests_total{app_name=\"$app_name\", path!=\"/metrics\"})",
+          "expr": "sum(\r\n  fastapi_http_requests_total{app_name=\"$app_name\", handler!=\"/metrics\"}\r\n)",
           "instant": true,
           "interval": "",
           "legendFormat": "",
@@ -116,6 +116,7 @@
       },
       "fieldConfig": {
         "defaults": {
+          "fieldMinMax": false,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -162,7 +163,7 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "fastapi_http_requests_total{app_name=\"$app_name\", path!=\"/metrics\"}",
+          "expr": "sum by (method) (fastapi_http_requests_total{app=\"yadro_backend\", handler!=\"/metrics\"})",
           "instant": true,
           "interval": "",
           "legendFormat": "{{method}} {{path}}",
@@ -671,5 +672,5 @@
   "timezone": "",
   "title": "Backend",
   "uid": "fastapi-observability",
-  "version": 2
+  "version": 4
 }

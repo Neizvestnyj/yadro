@@ -16,9 +16,7 @@ target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
-    """
-    Выполняет миграции в оффлайн-режиме.
-    """
+    """Выполняет миграции в оффлайн-режиме."""
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
@@ -32,9 +30,7 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    """
-    Выполняет миграции в онлайн-режиме.
-    """
+    """Выполняет миграции в онлайн-режиме."""
     connectable = create_engine(
         config.get_main_option("sqlalchemy.url"),
         pool_pre_ping=True,

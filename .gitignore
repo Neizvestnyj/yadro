@@ -72,3 +72,4 @@ monitoring/loki/data/
 # Project
 test.py
 backup.sql
+results_*.csv

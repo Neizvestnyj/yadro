@@ -7,6 +7,7 @@ from prometheus_client import Gauge
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.api.v1 import random, users
+from app.core.cache import cache
 from app.core.logging import logger
 from app.db.session import db_manager, get_db
 from app.services.user_service import fetch_and_save_users
@@ -38,6 +39,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     # код завершения работы
     await db_manager.close()
+    await cache.close()
 
 
 app = FastAPI(title="Random User API", lifespan=lifespan)
@@ -57,10 +59,10 @@ instrumentator = Instrumentator()
 
 inprogress_requests = Gauge("fastapi_http_requests_in_progress", "Number of in-progress HTTP requests")
 
+
 @app.middleware("http")
 async def track_inprogress_requests(
-    request: Request,
-    call_next: Callable[[Request], Awaitable[Response]]
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
 ) -> Response | None:
     """
     Middleware для подсчёта текущих обрабатываемых HTTP-запросов.

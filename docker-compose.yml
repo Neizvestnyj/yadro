@@ -50,12 +50,15 @@ services:
       - "8000:8000"
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:1234@db:5432/randomuser_db
+      - REDIS_URL=redis://redis:6379/0
     command: >
       sh -c "alembic upgrade head && 
       uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
     volumes:
       - ./backend:/app
     networks:
@@ -94,11 +97,37 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-  #    logging:
-  #      driver: loki
-  #      options:
-  #        loki-url: "http://loki:3100/loki/api/v1/push"
-  #        loki-external-labels: "container_name={{.Name}},job=postgres"
+
+  redis:
+    image: redis:7
+    container_name: yadro_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: yadro_redis_exporter
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+    ports:
+      - "9121:9121"
+    depends_on:
+      redis:
+        condition: service_healthy
+      prometheus:
+        condition: service_started
+    networks:
+      - app-network
 
   frontend:
     build:
@@ -139,6 +168,7 @@ volumes:
   grafanadata:
   prometheusdata:
   loki_data:
+  redis_data:
 
 networks:
   app-network:

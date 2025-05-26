@@ -8,6 +8,9 @@ scrape_configs:
       - targets: [ "backend:8000" ]
         labels:
           app: "yadro_backend"
+  - job_name: 'redis'
+    static_configs:
+      - targets: [ 'redis-exporter:9121' ]
 #  - job_name: "docker"
 #    static_configs:
 #      - targets: ["cadvisor:8080"]  # Для мониторинга контейнеров

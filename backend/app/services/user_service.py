@@ -4,6 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import func
 
+from app.core.cache import cache
 from app.core.logging import logger
 from app.db.crud.users import create_user, delete_user, get_user, get_users, update_user
 from app.db.models.user import User
@@ -23,8 +24,8 @@ async def fetch_and_save_users(db: AsyncSession, count: int) -> list[UserOut]:
     :rtype: List[UserOut]
     :raises ValueError: Если count > 10000.
     """
-    if count > 10000:
-        raise ValueError("Too many users requested")
+    if count > 5000:
+        raise ValueError("Too many users requested, max - 5000")
 
     users_data: dict = await fetch_random_users(count)  # Получаем данные пользователей из randomuser.me.
     users: list[UserOut] = []
@@ -75,6 +76,9 @@ async def fetch_and_save_users(db: AsyncSession, count: int) -> list[UserOut]:
             else:
                 logger.error(f"Database integrity error: {e}")
             continue
+
+    # Инвалидация кэша списка пользователей
+    await cache.delete("users:*")
     return users
 
 
@@ -91,7 +95,14 @@ async def get_users_service(db: AsyncSession, limit: int, offset: int) -> list[U
     :returns: Список пользователей.
     :rtype: List[UserOut]
     """
-    return await get_users(db, limit, offset)
+    cache_key = f"users:limit={limit}:offset={offset}"
+    cached_users = await cache.get(cache_key)
+    if cached_users:
+        return [UserOut(**user) for user in cached_users]
+
+    users: list[UserOut] = await get_users(db, limit, offset)
+    await cache.set(cache_key, [user.model_dump() for user in users], ttl=300)
+    return users
 
 
 async def get_user_service(db: AsyncSession, user_id: int) -> UserOut | None:
@@ -105,7 +116,15 @@ async def get_user_service(db: AsyncSession, user_id: int) -> UserOut | None:
     :returns: Пользователь или None, если не найден.
     :rtype: Optional[UserOut]
     """
-    return await get_user(db, user_id)
+    cache_key = f"user:{user_id}"
+    cached_user = await cache.get(cache_key)
+    if cached_user:
+        return UserOut(**cached_user)
+
+    user: UserOut = await get_user(db, user_id)
+    if user:
+        await cache.set(cache_key, user.model_dump(), ttl=300)
+    return user
 
 
 async def update_user_service(db: AsyncSession, user_id: int, user_data: UserUpdate) -> UserOut | None:
@@ -121,7 +140,12 @@ async def update_user_service(db: AsyncSession, user_id: int, user_data: UserUpd
     :returns: Обновленный пользователь или None, если не найден.
     :rtype: Optional[UserOut]
     """
-    return await update_user(db, user_id, user_data)
+    user: UserOut = await update_user(db, user_id, user_data)
+    if user:
+        # Инвалидация кэша
+        await cache.delete(f"user:{user_id}")
+        await cache.delete("users:*")
+    return user
 
 
 async def delete_user_service(db: AsyncSession, user_id: int) -> bool:
@@ -135,7 +159,12 @@ async def delete_user_service(db: AsyncSession, user_id: int) -> bool:
     :returns: True, если пользователь удален, False, если не найден.
     :rtype: bool
     """
-    return await delete_user(db, user_id)
+    success = await delete_user(db, user_id)
+    if success:
+        # Инвалидация кэша
+        await cache.delete(f"user:{user_id}")
+        await cache.delete("users:*")
+    return success
 
 
 async def get_random_user_service(db: AsyncSession) -> UserOut | None:
