@@ -1,7 +1,7 @@
 from typing import Any
 
-import pytest
 from httpx import AsyncClient, Response
+import pytest
 from respx import MockRouter
 from sqlalchemy.ext.asyncio import AsyncSession
 
