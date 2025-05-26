@@ -80,7 +80,7 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum(fastapi_http_requests_total{app_name=\"$app_name\", path!=\"/metrics\"})",
+          "expr": "sum(\r\n  fastapi_http_requests_total{app_name=\"$app_name\", handler!=\"/metrics\"}\r\n)",
           "instant": true,
           "interval": "",
           "legendFormat": "",
@@ -671,5 +671,5 @@
   "timezone": "",
   "title": "Backend",
   "uid": "fastapi-observability",
-  "version": 2
+  "version": 3
 }
