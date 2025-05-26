@@ -14,17 +14,18 @@ async def create_user(db: AsyncSession, user: UserCreate) -> UserOut:
     :param user: Данные для создания пользователя.
     :type user: UserCreate
     :returns: Созданный пользователь.
-    :rtype: User
+    :rtype: UserOut
     """
     db_user = User(**user.model_dump())
     db.add(db_user)
     await db.commit()
     await db.refresh(db_user)
     user_out = UserOut.model_validate(db_user)
+
     return user_out
 
 
-async def get_users(db: AsyncSession, limit: int, offset: int) -> list[User]:
+async def get_users(db: AsyncSession, limit: int, offset: int) -> list[UserOut]:
     """
     Получает список пользователей с пагинацией.
 
@@ -35,13 +36,15 @@ async def get_users(db: AsyncSession, limit: int, offset: int) -> list[User]:
     :param offset: Смещение для пагинации.
     :type offset: int
     :returns: Список пользователей.
-    :rtype: List[User]
+    :rtype: list[UserOut]
     """
     result = await db.execute(select(User).offset(offset).limit(limit))
-    return result.scalars().all()
+    users = result.scalars().all()
+
+    return [UserOut.model_validate(user) for user in users]
 
 
-async def get_user(db: AsyncSession, user_id: int) -> User | None:
+async def get_user(db: AsyncSession, user_id: int) -> UserOut | None:
     """
     Получает пользователя по ID.
 
@@ -50,13 +53,15 @@ async def get_user(db: AsyncSession, user_id: int) -> User | None:
     :param user_id: ID пользователя.
     :type user_id: int
     :returns: Пользователь или None, если не найден.
-    :rtype: Optional[User]
+    :rtype: UserOut | None
     """
     result = await db.execute(select(User).filter_by(id=user_id))
-    return result.scalar_one_or_none()
+    user = result.scalar_one_or_none()
+
+    return UserOut.model_validate(user) if user else None
 
 
-async def update_user(db: AsyncSession, user_id: int, user_data: UserUpdate) -> User | None:
+async def update_user(db: AsyncSession, user_id: int, user_data: UserUpdate) -> UserOut | None:
     """
     Обновляет данные пользователя.
 
@@ -67,7 +72,7 @@ async def update_user(db: AsyncSession, user_id: int, user_data: UserUpdate) -> 
     :param user_data: Данные для обновления.
     :type user_data: UserUpdate
     :returns: Обновленный пользователь или None, если не найден.
-    :rtype: Optional[User]
+    :rtype: UserOut | None
     """
     result = await db.execute(select(User).filter_by(id=user_id))
     user = result.scalar_one_or_none()
@@ -77,7 +82,8 @@ async def update_user(db: AsyncSession, user_id: int, user_data: UserUpdate) -> 
         setattr(user, key, value)
     await db.commit()
     await db.refresh(user)
-    return user
+
+    return UserOut.model_validate(user)
 
 
 async def delete_user(db: AsyncSession, user_id: int) -> bool:
@@ -97,4 +103,5 @@ async def delete_user(db: AsyncSession, user_id: int) -> bool:
         return False
     await db.delete(user)
     await db.commit()
+
     return True

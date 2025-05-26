@@ -27,6 +27,7 @@ aiofiles = "^24.1.0"
 pydantic = { extras = ["email"], version = "^2.11.5" }
 prometheus-fastapi-instrumentator = "^7.1.0"
 psycopg2 = "^2.9.10"
+redis = "^6.1.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.5"
@@ -54,3 +55,7 @@ omit = [
 asyncio_mode = "auto"
 addopts = "--cov=app --cov-report=html"
 testpaths = ["tests"]
+
+[tool.black]
+line-length = 120
+target-version = ['py311']  # Python 3.11, как в ruff.toml

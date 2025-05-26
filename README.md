@@ -92,17 +92,36 @@ docker-compose up -d --build
 ## 🧪 Тестирование
 
 ### Интеграционные тесты
+
 ```shell
 pytest tests/ -v
 ```
 
 ### Нагрузочное тестирование
+
+Запросите дополнительно пользователей для теста (выполните 3 раза, должно быть > 5000 пользователей)
+
 ```shell
-locust -f tests/locustfile.py --host=http://localhost:8000 --users 50 --spawn-rate 10 --headless --run-time 1m
+curl -X POST "http://localhost:8000/v1/users/fetch?count=5000"
 ```
-247 RPS
+
+```shell
+locust -f tests/locustfile.py --host=http://localhost:8000 --users 1000 --spawn-rate 50 --headless --run-time 3m --csv=results
+```
+
+или с веб-интерфейсом
+
+```shell
+locust -f tests/locustfile.py --host=http://localhost:8000 --web-host=localhost
+```
+
+| Конфигурация | RPS   | Медианное время ответа (мс) | Количество запросов | Среднее время ответа (мс) |
+|--------------|-------|-----------------------------|---------------------|---------------------------|
+| Без Redis    | 211.4 | 3900                        | 38616               | 4269.85                   |
+| С Redis      | 188.5 | 4400                        | 33420               | 4924.32                   |
 
 ### Проверка доступности контейнеров с метриками
+
 ```shell
 # ready
 curl http://localhost:3100/ready
@@ -119,11 +138,12 @@ curl http://localhost:8000/metrics
 ## 📊 Мониторинг с Grafana Dashboard
 
 1. Откройте Grafana: [http://localhost:3000](http://localhost:3000)
-   - Логин: `admin`
-   - Пароль: `admin`
+    - Логин: `admin`
+    - Пароль: `admin`
 
-2. Импортируйте дашборд:
-   Dashboards → New → Import → Upload JSON файла [Backend-dashboard.json](backend/monitoring/grafana/Backend-dashboard.json)
+2. Импортируйте дашборды:
+   Dashboards → New → Import → Upload JSON
+   файла [Backend-dashboard.json](backend/monitoring/grafana/Backend-dashboard.json) - [Grafana Labs - 16110](https://grafana.com/grafana/dashboards/16110-fastapi-observability/), [Redis-dashboard.json](backend/monitoring/grafana/Redis-dashboard.json) - [Grafana Labs - 763](https://grafana.com/grafana/dashboards/763-redis-dashboard-for-prometheus-redis-exporter-1-x/)
 
 - **Prometheus**: Собирает метрики FastAPI (`http://localhost:8000/metrics`).
 - **Loki**: Собирает JSON-логи приложения.
