@@ -11,6 +11,11 @@ services:
       - loki_data:/loki
     networks:
       - app-network
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   prometheus:
     image: prom/prometheus:latest
@@ -22,6 +27,11 @@ services:
       - prometheusdata:/prometheus
     networks:
       - app-network
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   grafana:
     image: grafana/grafana:latest
@@ -40,6 +50,11 @@ services:
       - loki
     networks:
       - app-network
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   backend:
     build:
@@ -51,9 +66,10 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:1234@db:5432/randomuser_db
       - REDIS_URL=redis://redis:6379/0
+    # uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1 --reload - для тестов
     command: >
       sh -c "alembic upgrade head && 
-      uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"
+      gunicorn -k uvicorn.workers.UvicornWorker -w 2 -b 0.0.0.0:8000 --timeout 60 --graceful-timeout 30 app.main:app"
     depends_on:
       db:
         condition: service_healthy
@@ -72,9 +88,9 @@ services:
         # и он не знает имени хоста контейнера Loki, которое ему присвоил compose во внутренней сети проекта.
         loki-url: "http://localhost:3100/loki/api/v1/push"
         loki-batch-size: "100"
-        loki-retries: 2
+        loki-retries: 3
         loki-max-backoff: 1000ms
-        loki-timeout: 1s
+        loki-timeout: 2s
         mode: non-blocking
         max-buffer-size: 4m
         loki-external-labels: "container_name={{.Name}},job=fastapi"
@@ -97,6 +113,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   redis:
     image: redis:7
@@ -113,6 +134,11 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   redis-exporter:
     image: oliver006/redis_exporter:latest
@@ -128,6 +154,11 @@ services:
         condition: service_started
     networks:
       - app-network
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   frontend:
     build:
@@ -145,23 +176,53 @@ services:
       - CHOKIDAR_USEPOLLING=true
     networks:
       - app-network
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
-#  cadvisor:
-#    image: gcr.io/cadvisor/cadvisor:latest
-#    container_name: cadvisor
-#    ports:
-#      - "8080:8080"
-#    volumes:
-#      - /var/run:/var/run:ro
-#      - /sys:/sys:ro
-#      - /var/lib/docker/:/var/lib/docker:ro
-#    networks:
-#      - app-network
-#    logging:
-#      driver: loki
-#      options:
-#        loki-url: "http://loki:3100/loki/api/v1/push"
-#        loki-external-labels: "container_name={{.Name}},job=cadvisor"
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    ports:
+      - "8080:8080"
+    volumes:
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - app-network
+    depends_on:
+      - prometheus
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+    networks:
+      - app-network
+    depends_on:
+      - prometheus
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   db_data:

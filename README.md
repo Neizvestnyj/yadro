@@ -19,7 +19,7 @@
 ## ⚙️ Требования
 
 - Python 3.11+
-- PostgreSQL 16+
+- PostgreSQL 17+
 - Node.js 18+
 - Docker
 
@@ -144,7 +144,9 @@ curl http://localhost:8000/metrics
 
 2. Импортируйте дашборды:
    Dashboards → New → Import → Upload JSON
-   файла [Backend-dashboard.json](backend/monitoring/grafana/Backend-dashboard.json) - [Grafana Labs - 16110](https://grafana.com/grafana/dashboards/16110-fastapi-observability/), [Redis-dashboard.json](backend/monitoring/grafana/Redis-dashboard.json) - [Grafana Labs - 763](https://grafana.com/grafana/dashboards/763-redis-dashboard-for-prometheus-redis-exporter-1-x/)
+   - [Backend-dashboard.json](backend/monitoring/grafana/Backend-dashboard.json): [Grafana Labs - 16110](https://grafana.com/grafana/dashboards/16110-fastapi-observability/)
+   - [Redis-dashboard.json](backend/monitoring/grafana/Redis-dashboard.json): [Grafana Labs - 763](https://grafana.com/grafana/dashboards/763-redis-dashboard-for-prometheus-redis-exporter-1-x/)
+   - [Docker_Container_and_Host_Metrics.json](backend/monitoring/grafana/Docker_Container_and_Host_Metrics.json): [Grafana Labs - 10619](https://grafana.com/grafana/dashboards/10619-docker-host-container-overview/) - *только на Unix системах, на Windows часть метрик будет недоступна*
 
 - **Prometheus**: Собирает метрики FastAPI (`http://localhost:8000/metrics`).
 - **Loki**: Собирает JSON-логи приложения.
