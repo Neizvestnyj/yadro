@@ -59,7 +59,7 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile_dev
+      dockerfile: Dockerfile
     container_name: yadro_backend
     ports:
       - "8000:8000"
@@ -152,6 +152,25 @@ services:
         condition: service_healthy
       prometheus:
         condition: service_started
+    networks:
+      - app-network
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile_dev
+    ports:
+      - "3001:3000"
+    command: npm start
+    volumes:
+      - /app/node_modules
+    depends_on:
+      - backend
     networks:
       - app-network
     logging:
