@@ -20,14 +20,21 @@ class Settings(BaseSettings):
     :type REDIS_URL: str
     :param RANDOMUSER_API_URL: URL внешнего API randomuser.me.
     :type RANDOMUSER_API_URL: str
+    :param ENVIRONMENT: Окружение приложения (development или production).
+    :type ENVIRONMENT: str
     """
 
     DATABASE_URL: str = "postgresql+asyncpg://postgres:1234@localhost:5432/randomuser_db"
     SQLALCHEMY_TEST_DATABASE_URL: str = "postgresql+asyncpg://postgres:1234@localhost:5432/test_randomuser_db"
     REDIS_URL: str = "redis://localhost:6379/0"
     RANDOMUSER_API_URL: str = "https://randomuser.me/api/"
+    ENVIRONMENT: str = "development"
 
-    model_config = SettingsConfigDict(env_file=str(ENV_PATH), env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(
+        env_file=str(ENV_PATH),
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+    )
 
     @property
     def DATABASE_URL_SYNC(self) -> str:  # noqa: N802

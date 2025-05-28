@@ -8,6 +8,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.api.v1 import random, users
 from app.core.cache import cache
+from app.core.config import settings
 from app.core.logging import logger
 from app.db.session import db_manager, get_db
 from app.services.user_service import fetch_and_save_users
@@ -46,9 +47,14 @@ app = FastAPI(title="Random User API", lifespan=lifespan)
 app.include_router(users.router)
 app.include_router(random.router)
 
+CORS_ORIGINS = {
+    "development": ["http://localhost:3001", "http://frontend:3001"],
+    "production": ["http://localhost:3001", "http://frontend:3001"],  # ["http://localhost", "https://yourdomain.com"]
+}
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://frontend:3000", "http://localhost:3001", "http://frontend:3001"],
+    allow_origins=CORS_ORIGINS.get(settings.ENVIRONMENT, ["http://localhost:3001"]),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -56,7 +62,6 @@ app.add_middleware(
 
 # Настройка Prometheus с кастомным именем метрики
 instrumentator = Instrumentator()
-
 inprogress_requests = Gauge("fastapi_http_requests_in_progress", "Number of in-progress HTTP requests")
 
 

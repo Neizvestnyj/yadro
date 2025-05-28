@@ -59,13 +59,14 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile_dev
     container_name: yadro_backend
     ports:
       - "8000:8000"
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:1234@db:5432/randomuser_db
       - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=production
     command: >
       sh -c "alembic upgrade head && 
       gunicorn -k uvicorn.workers.UvicornWorker -w 2 -b 0.0.0.0:8000 --timeout 60 --graceful-timeout 30 app.main:app"
@@ -151,26 +152,6 @@ services:
         condition: service_healthy
       prometheus:
         condition: service_started
-    networks:
-      - app-network
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile_dev
-    ports:
-      - "3001:3000"
-    command: npm start
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    depends_on:
-      - backend
     networks:
       - app-network
     logging:
