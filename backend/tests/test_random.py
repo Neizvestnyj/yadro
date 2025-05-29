@@ -34,6 +34,7 @@ async def test_get_random_user(async_session: AsyncSession, async_client: AsyncC
     user_data: dict[str, Any] = response.json()
     assert user_data["email"] == "tom.wilson@example.com"
 
+
 @pytest.mark.asyncio
 async def test_get_random_user_when_none_exist(async_session: AsyncSession, async_client: AsyncClient) -> None:
     """
