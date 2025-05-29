@@ -203,7 +203,7 @@ async def test_delete_user_when_none_exist(async_session: AsyncSession, async_cl
     """
     # Удаляем пользователя
     response = await async_client.delete("/v1/users/150")
-    assert response.status_code == 204
+    assert response.status_code == 404
     delete_user = response.json()
     assert delete_user["detail"] == "User not found"
 
