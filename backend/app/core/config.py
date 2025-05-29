@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     """
     Настройки приложения.
 
+    :param APP_TITLE: Название приложение.
+    :type APP_TITLE: str
     :param DATABASE_URL: URL для подключения к PostgreSQL.
     :type DATABASE_URL: str
     :param SQLALCHEMY_TEST_DATABASE_URL: URL для подключения к тестовой PostgreSQL.
@@ -23,6 +25,8 @@ class Settings(BaseSettings):
     :param ENVIRONMENT: Окружение приложения (development или production).
     :type ENVIRONMENT: str
     """
+
+    APP_TITLE: str = "Random User API"
 
     DATABASE_URL: str = "postgresql+asyncpg://postgres:1234@localhost:5432/randomuser_db"
     SQLALCHEMY_TEST_DATABASE_URL: str = "postgresql+asyncpg://postgres:1234@localhost:5432/test_randomuser_db"

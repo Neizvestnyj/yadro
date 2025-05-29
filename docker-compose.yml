@@ -62,7 +62,7 @@ services:
       dockerfile: Dockerfile
     container_name: yadro_backend
     ports:
-      - "8000:8000"
+      - "8000:8000" # В реально prod не нужно
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:1234@db:5432/randomuser_db
       - REDIS_URL=redis://redis:6379/0
@@ -75,8 +75,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-    volumes:
-      - ./backend:/app
     networks:
       - app-network
     logging:
@@ -160,17 +158,41 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  frontend:
+  nginx:
     build:
       context: ./frontend
-      dockerfile: Dockerfile_dev
+      dockerfile: Dockerfile
+    container_name: nginx
     ports:
-      - "3001:3000"
-    command: npm start
-    volumes:
-      - /app/node_modules
+      - "80:80"
+      - "443:443"
     depends_on:
       - backend
+    # volumes:
+    # Для SSL сертификатов:
+    # - ./path/to/certs:/etc/nginx/certs:ro
+    networks:
+      - app-network
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/loki/api/v1/push"
+        loki-batch-size: "100"
+        loki-retries: 3
+        loki-max-backoff: 1000ms
+        loki-timeout: 2s
+        mode: non-blocking
+        max-buffer-size: 4m
+        loki-external-labels: "container_name={{.Name}},job=nginx"
+
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:latest
+    container_name: nginx_exporter
+    command: -nginx.scrape-uri http://nginx:80/nginx_status
+    ports:
+      - "9113:9113"
+    depends_on:
+      - nginx
     networks:
       - app-network
     logging:

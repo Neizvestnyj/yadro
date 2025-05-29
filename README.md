@@ -44,7 +44,7 @@
    ```
 
 3. Настройте БД:
-   ```shell
+   ```psql
    createdb randomuser_db
    ```
 
@@ -57,8 +57,13 @@
    ```shell
    alembic upgrade head
    ```
+   
+6. Запустите REdis
+   ```shell
+   docker run --rm -d --name redis_test -p 6379:6379 redis:7 redis-server --save "" --appendonly no
+   ```
 
-6. Запустите серверы:
+7. Запустите серверы:
    ```shell
    # Бэкенд
    uvicorn app.main:app --reload
@@ -67,7 +72,10 @@
    npm start
    ```
 
-Приложение будет доступно по адресу: [http://localhost:3001](http://localhost:3001)
+После запуска:
+
+- Фронтенд: [http://localhost:3001](http://localhost:3001)
+- API документация: [http://localhost:3001/docs](http://localhost:3001/docs)
 
 ### Docker-запуск
 
@@ -78,8 +86,8 @@ docker-compose up -d --build
 
 После запуска:
 
-- Фронтенд: [http://localhost:3001](http://localhost:3001)
-- API документация: [http://localhost:8000/docs](http://localhost:8000/docs)
+- Фронтенд: [http://localhost](http://localhost)
+- API документация: [http://localhost/docs](http://localhost/docs)
 
 ## 📡 API Endpoints
 
@@ -132,10 +140,6 @@ curl http://localhost:9090/targets
 curl http://localhost:8000/metrics
 ```
 
-## 🔍 Документация
-
-- Swagger UI: [http://localhost:8000/docs](http://localhost:8000/docs)
-
 ## 📊 Мониторинг с Grafana Dashboard
 
 1. Откройте Grafana: [http://localhost:3000](http://localhost:3000)
@@ -144,10 +148,11 @@ curl http://localhost:8000/metrics
 
 2. Импортируйте дашборды:
    Dashboards → New → Import → Upload JSON
-    - [Backend-dashboard.json](backend/monitoring/grafana/Backend-dashboard.json): [Grafana Labs - 16110](https://grafana.com/grafana/dashboards/16110-fastapi-observability/)
-    - [Redis-dashboard.json](backend/monitoring/grafana/Redis-dashboard.json): [Grafana Labs - 763](https://grafana.com/grafana/dashboards/763-redis-dashboard-for-prometheus-redis-exporter-1-x/)
-    - [Docker_Container_and_Host_Metrics.json](backend/monitoring/grafana/Docker_Container_and_Host_Metrics.json): [Grafana Labs - 10619](https://grafana.com/grafana/dashboards/10619-docker-host-container-overview/) -
+    - [Backend-dashboard.json](backend/monitoring/grafana/dashboards/Backend-dashboard.json): [Grafana Labs - 16110](https://grafana.com/grafana/dashboards/16110-fastapi-observability/)
+    - [Redis-dashboard.json](backend/monitoring/grafana/dashboards/Redis-dashboard.json): [Grafana Labs - 763](https://grafana.com/grafana/dashboards/763-redis-dashboard-for-prometheus-redis-exporter-1-x/)
+    - [Docker_Container_and_Host_Metrics.json](backend/monitoring/grafana/dashboards/Docker_Container_and_Host_Metrics.json): [Grafana Labs - 10619](https://grafana.com/grafana/dashboards/10619-docker-host-container-overview/) -
       *только на Unix системах, на Windows часть метрик будет недоступна*
+    - [NGINX-1748555632072.json](backend/monitoring/grafana/dashboards/NGINX.json): [GitHub - nginx-prometheus-exporter](https://github.com/nginx/nginx-prometheus-exporter/blob/main/grafana/dashboard.json)
 
 - **Prometheus**: Собирает метрики FastAPI (`http://localhost:8000/metrics`).
 - **Loki**: Собирает JSON-логи приложения.
