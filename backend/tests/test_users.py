@@ -90,6 +90,25 @@ async def test_get_user_by_id(async_session: AsyncSession, async_client: AsyncCl
 
 
 @pytest.mark.asyncio
+async def test_get_user_by_id_when_none_exist(async_session: AsyncSession, async_client: AsyncClient) -> None:
+    """
+    Тестирует эндпоинт GET /v1/users/{user_id} для получения пользователя по ID.
+
+    :param async_session: Асинхронная сессия базы данных.
+    :type async_session: AsyncSession
+    :param async_client: Асинхронный тестовый клиент FastAPI.
+    :type async_client: AsyncClient
+    :returns: Ничего не возвращает.
+    :rtype: None
+    """
+    # Получаем пользователя
+    response = await async_client.get("/v1/users/150")
+    assert response.status_code == 404
+    get_user = response.json()
+    assert get_user["detail"] == "User not found"
+
+
+@pytest.mark.asyncio
 async def test_update_user(async_session: AsyncSession, async_client: AsyncClient) -> None:
     """
     Тестирует эндпоинт PUT /v1/users/{user_id} для обновления данных пользователя.
@@ -122,6 +141,26 @@ async def test_update_user(async_session: AsyncSession, async_client: AsyncClien
 
 
 @pytest.mark.asyncio
+async def test_update_user_when_none_exist(async_session: AsyncSession, async_client: AsyncClient) -> None:
+    """
+    Тестирует эндпоинт PUT /v1/users/{user_id} для обновления данных пользователя.
+
+    :param async_session: Асинхронная сессия базы данных.
+    :type async_session: AsyncSession
+    :param async_client: Асинхронный тестовый клиент FastAPI.
+    :type async_client: AsyncClient
+    :returns: Ничего не возвращает.
+    :rtype: None
+    """
+    # Обновляем пользователя
+    update_data = {"first_name": "Updated", "email": "updated@example.com"}
+    response = await async_client.put("/v1/users/105", json=update_data)
+    assert response.status_code == 404
+    updated_user = response.json()
+    assert updated_user["detail"] == "User not found"
+
+
+@pytest.mark.asyncio
 async def test_delete_user(async_session: AsyncSession, async_client: AsyncClient) -> None:
     """
     Тестирует эндпоинт DELETE /v1/users/{user_id} для удаления пользователя.
@@ -148,6 +187,25 @@ async def test_delete_user(async_session: AsyncSession, async_client: AsyncClien
     # Удаляем пользователя
     response = await async_client.delete(f"/v1/users/{user.id}")
     assert response.status_code == 204
+
+
+@pytest.mark.asyncio
+async def test_delete_user_when_none_exist(async_session: AsyncSession, async_client: AsyncClient) -> None:
+    """
+    Тестирует эндпоинт DELETE /v1/users/{user_id} для удаления пользователя.
+
+    :param async_session: Асинхронная сессия базы данных.
+    :type async_session: AsyncSession
+    :param async_client: Асинхронный тестовый клиент FastAPI.
+    :type async_client: AsyncClient
+    :returns: Ничего не возвращает.
+    :rtype: None
+    """
+    # Удаляем пользователя
+    response = await async_client.delete("/v1/users/150")
+    assert response.status_code == 404
+    delete_user = response.json()
+    assert delete_user["detail"] == "User not found"
 
 
 @pytest.mark.asyncio
