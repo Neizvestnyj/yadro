@@ -77,8 +77,6 @@ async def fetch_and_save_users(db: AsyncSession, count: int) -> list[UserOut]:
                 logger.error(f"Database integrity error: {e}")
             continue
 
-    # Инвалидация кэша списка пользователей
-    await cache.delete("users:*")
     return users
 
 
@@ -95,13 +93,7 @@ async def get_users_service(db: AsyncSession, limit: int, offset: int) -> list[U
     :returns: Список пользователей.
     :rtype: List[UserOut]
     """
-    cache_key = f"users:limit={limit}:offset={offset}"
-    cached_users = await cache.get(cache_key)
-    if cached_users:
-        return [UserOut(**user) for user in cached_users]
-
     users: list[UserOut] = await get_users(db, limit, offset)
-    await cache.set(cache_key, [user.model_dump() for user in users], ttl=300)
     return users
 
 
@@ -144,7 +136,6 @@ async def update_user_service(db: AsyncSession, user_id: int, user_data: UserUpd
     if user:
         # Инвалидация кэша
         await cache.delete(f"user:{user_id}")
-        await cache.delete("users:*")
     return user
 
 
@@ -163,7 +154,6 @@ async def delete_user_service(db: AsyncSession, user_id: int) -> bool:
     if success:
         # Инвалидация кэша
         await cache.delete(f"user:{user_id}")
-        await cache.delete("users:*")
     return success
 
 

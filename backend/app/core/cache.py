@@ -44,7 +44,7 @@ class RedisCache:
         :returns: None
         """
         try:
-            await self.client.setex(key, ttl, json.dumps(value))
+            await self.client.setex(key, ttl, json.dumps(value, default=str))
         except Exception as e:
             logger.error(f"Redis set error: {e}")
 
