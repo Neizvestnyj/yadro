@@ -13,8 +13,15 @@ class RedisCache:
     """Клиент для работы с Redis."""
 
     def __init__(self) -> None:
-        """Инициализирует подключение к Redis."""
-        self.client: redis.Redis = redis.from_url(settings.REDIS_URL, decode_responses=True)
+        """Инициализирует RedisCache без немедленного подключения."""
+        self._client: redis.Redis | None = None
+
+    @property
+    def client(self) -> redis.Redis:
+        """Лениво создает и возвращает клиент Redis."""
+        if self._client is None:
+            self._client = redis.from_url(settings.REDIS_URL, decode_responses=True)
+        return self._client
 
     async def get(self, key: str) -> JsonType | None:
         """
@@ -49,7 +56,7 @@ class RedisCache:
         except Exception as e:
             logger.error(f"Redis set error: {e}")
 
-    async def delete(self, key: str) -> None:
+    async def delete(self, key: str | tuple) -> None:
         """
         Удаляет ключ из кэша.
 
@@ -58,7 +65,10 @@ class RedisCache:
         :returns: None
         """
         try:
-            await self.client.delete(key)
+            if isinstance(key, tuple):
+                await self.client.delete(*key)
+            else:
+                await self.client.delete(key)
         except Exception as e:
             logger.error(f"Redis delete error: {e}")
 
@@ -102,3 +112,8 @@ class RedisCache:
 
 
 cache = RedisCache()
+
+
+def get_cache() -> RedisCache:
+    """Предоставляет класс RedisCache для зависимостей FastAPI."""
+    return cache

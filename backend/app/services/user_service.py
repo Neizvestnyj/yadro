@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import func
 
-from app.core.cache import cache
+from app.core.cache import RedisCache
 from app.core.logging import logger
 from app.db.crud.users import create_user, delete_user, get_user, get_users, update_user
 from app.db.models.user import User
@@ -84,12 +84,14 @@ async def fetch_and_save_users(db: AsyncSession, count: int) -> list[UserOut]:
     return users
 
 
-async def get_users_service(db: AsyncSession, limit: int, offset: int) -> list[UserOut]:
+async def get_users_service(db: AsyncSession, cache: RedisCache, limit: int, offset: int) -> list[UserOut]:
     """
     Получает список пользователей с пагинацией.
 
     :param db: Асинхронная сессия SQLAlchemy.
     :type db: AsyncSession
+    :param cache: Класс для работы с Redis кэшем.
+    :type cache: RedisCache
     :param limit: Количество записей на страницу.
     :type limit: int
     :param offset: Смещение для пагинации.
@@ -110,12 +112,14 @@ async def get_users_service(db: AsyncSession, limit: int, offset: int) -> list[U
     return users
 
 
-async def get_user_service(db: AsyncSession, user_id: int) -> UserOut | None:
+async def get_user_service(db: AsyncSession, cache: RedisCache, user_id: int) -> UserOut | None:
     """
     Получает пользователя по ID.
 
     :param db: Асинхронная сессия SQLAlchemy.
     :type db: AsyncSession
+    :param cache: Класс для работы с Redis кэшем.
+    :type cache: RedisCache
     :param user_id: ID пользователя.
     :type user_id: int
     :returns: Пользователь или None, если не найден.
@@ -132,12 +136,16 @@ async def get_user_service(db: AsyncSession, user_id: int) -> UserOut | None:
     return user
 
 
-async def update_user_service(db: AsyncSession, user_id: int, user_data: UserUpdate) -> UserOut | None:
+async def update_user_service(
+    db: AsyncSession, cache: RedisCache, user_id: int, user_data: UserUpdate
+) -> UserOut | None:
     """
     Обновляет данные пользователя.
 
     :param db: Асинхронная сессия SQLAlchemy.
     :type db: AsyncSession
+    :param cache: Класс для работы с Redis кэшем.
+    :type cache: RedisCache
     :param user_id: ID пользователя.
     :type user_id: int
     :param user_data: Данные для обновления.
@@ -152,16 +160,18 @@ async def update_user_service(db: AsyncSession, user_id: int, user_data: UserUpd
         # Инвалидация кэша всех страниц
         page_keys = await cache.smembers("user_pages")
         if page_keys:
-            await cache.client.delete(*page_keys, "user_pages")
+            await cache.delete(*page_keys, "user_pages")
     return user
 
 
-async def delete_user_service(db: AsyncSession, user_id: int) -> bool:
+async def delete_user_service(db: AsyncSession, cache: RedisCache, user_id: int) -> bool:
     """
     Удаляет пользователя по ID.
 
     :param db: Асинхронная сессия SQLAlchemy.
     :type db: AsyncSession
+    :param cache: Класс для работы с Redis кэшем.
+    :type cache: RedisCache
     :param user_id: ID пользователя.
     :type user_id: int
     :returns: True, если пользователь удален, False, если не найден.
@@ -170,9 +180,9 @@ async def delete_user_service(db: AsyncSession, user_id: int) -> bool:
     success = await delete_user(db, user_id)
     if success:
         await cache.delete(f"user:{user_id}")
-        page_keys = await cache.client.smembers("user_pages")
+        page_keys = await cache.smembers("user_pages")
         if page_keys:
-            await cache.client.delete(*page_keys, "user_pages")
+            await cache.delete(*page_keys, "user_pages")
     return success
 
 

@@ -13,7 +13,7 @@ from app.services.user_service import create_user, fetch_and_save_users
 @pytest.mark.asyncio
 async def test_get_users_paginated(async_session: AsyncSession, async_client: AsyncClient) -> None:
     """
-    Тестирует эндпоинт GET /v1/users с пагинацией.
+    Тестирует эндпоинт GET /api/v1/users с пагинацией.
 
     :param async_session: Асинхронная сессия базы данных.
     :type async_session: AsyncSession
@@ -25,14 +25,14 @@ async def test_get_users_paginated(async_session: AsyncSession, async_client: As
     users = await fetch_and_save_users(async_session, 15)
 
     # Тестируем первую страницу
-    response = await async_client.get("/v1/users?limit=10&offset=0")
+    response = await async_client.get("/api/v1/users?limit=10&offset=0")
     assert response.status_code == 200
     users_resp = response.json()
     assert len(users_resp) == 10
     assert users_resp[0]["first_name"] == users[0].first_name
 
     # Тестируем вторую страницу
-    response = await async_client.get("/v1/users?limit=5&offset=10")
+    response = await async_client.get("/api/v1/users?limit=5&offset=10")
     assert response.status_code == 200
     users_resp = response.json()
     assert len(users_resp) == 5
@@ -42,7 +42,7 @@ async def test_get_users_paginated(async_session: AsyncSession, async_client: As
 @pytest.mark.asyncio
 async def test_get_users(async_session: AsyncSession, async_client: AsyncClient) -> None:
     """
-    Тестирует эндпоинт GET /v1/users для получения списка пользователей.
+    Тестирует эндпоинт GET /api/v1/users для получения списка пользователей.
 
     :param async_session: Асинхронная сессия базы данных.
     :type async_session: AsyncSession
@@ -52,7 +52,7 @@ async def test_get_users(async_session: AsyncSession, async_client: AsyncClient)
     :rtype: None
     """
     await fetch_and_save_users(async_session, 2)
-    response = await async_client.get("/v1/users?limit=1&offset=0")
+    response = await async_client.get("/api/v1/users?limit=1&offset=0")
     assert response.status_code == 200
     users: list[dict[str, Any]] = response.json()
     assert len(users) == 1
@@ -61,7 +61,7 @@ async def test_get_users(async_session: AsyncSession, async_client: AsyncClient)
 @pytest.mark.asyncio
 async def test_get_user_by_id(async_session: AsyncSession, async_client: AsyncClient) -> None:
     """
-    Тестирует эндпоинт GET /v1/users/{user_id} для получения пользователя по ID.
+    Тестирует эндпоинт GET /api/v1/users/{user_id} для получения пользователя по ID.
 
     :param async_session: Асинхронная сессия базы данных.
     :type async_session: AsyncSession
@@ -82,7 +82,7 @@ async def test_get_user_by_id(async_session: AsyncSession, async_client: AsyncCl
     user = await create_user(async_session, user_data)
 
     # Получаем пользователя
-    response = await async_client.get(f"/v1/users/{user.id}")
+    response = await async_client.get(f"/api/v1/users/{user.id}")
     assert response.status_code == 200
     user_data = response.json()
     assert user_data["first_name"] == user.first_name
@@ -92,7 +92,7 @@ async def test_get_user_by_id(async_session: AsyncSession, async_client: AsyncCl
 @pytest.mark.asyncio
 async def test_get_user_by_id_when_none_exist(async_session: AsyncSession, async_client: AsyncClient) -> None:
     """
-    Тестирует эндпоинт GET /v1/users/{user_id} для получения пользователя по ID.
+    Тестирует эндпоинт GET /api/v1/users/{user_id} для получения пользователя по ID.
 
     :param async_session: Асинхронная сессия базы данных.
     :type async_session: AsyncSession
@@ -102,7 +102,7 @@ async def test_get_user_by_id_when_none_exist(async_session: AsyncSession, async
     :rtype: None
     """
     # Получаем пользователя
-    response = await async_client.get("/v1/users/150")
+    response = await async_client.get("/api/v1/users/150")
     assert response.status_code == 404
     get_user = response.json()
     assert get_user["detail"] == "User not found"
@@ -111,7 +111,7 @@ async def test_get_user_by_id_when_none_exist(async_session: AsyncSession, async
 @pytest.mark.asyncio
 async def test_update_user(async_session: AsyncSession, async_client: AsyncClient) -> None:
     """
-    Тестирует эндпоинт PUT /v1/users/{user_id} для обновления данных пользователя.
+    Тестирует эндпоинт PUT /api/v1/users/{user_id} для обновления данных пользователя.
 
     :param async_session: Асинхронная сессия базы данных.
     :type async_session: AsyncSession
@@ -133,7 +133,7 @@ async def test_update_user(async_session: AsyncSession, async_client: AsyncClien
 
     # Обновляем пользователя
     update_data = {"first_name": "Updated", "email": "updated@example.com"}
-    response = await async_client.put(f"/v1/users/{user.id}", json=update_data)
+    response = await async_client.put(f"/api/v1/users/{user.id}", json=update_data)
     assert response.status_code == 200
     updated_user = response.json()
     assert updated_user["first_name"] == "Updated"
@@ -143,7 +143,7 @@ async def test_update_user(async_session: AsyncSession, async_client: AsyncClien
 @pytest.mark.asyncio
 async def test_update_user_when_none_exist(async_session: AsyncSession, async_client: AsyncClient) -> None:
     """
-    Тестирует эндпоинт PUT /v1/users/{user_id} для обновления данных пользователя.
+    Тестирует эндпоинт PUT /api/v1/users/{user_id} для обновления данных пользователя.
 
     :param async_session: Асинхронная сессия базы данных.
     :type async_session: AsyncSession
@@ -154,7 +154,7 @@ async def test_update_user_when_none_exist(async_session: AsyncSession, async_cl
     """
     # Обновляем пользователя
     update_data = {"first_name": "Updated", "email": "updated@example.com"}
-    response = await async_client.put("/v1/users/105", json=update_data)
+    response = await async_client.put("/api/v1/users/105", json=update_data)
     assert response.status_code == 404
     updated_user = response.json()
     assert updated_user["detail"] == "User not found"
@@ -163,7 +163,7 @@ async def test_update_user_when_none_exist(async_session: AsyncSession, async_cl
 @pytest.mark.asyncio
 async def test_delete_user(async_session: AsyncSession, async_client: AsyncClient) -> None:
     """
-    Тестирует эндпоинт DELETE /v1/users/{user_id} для удаления пользователя.
+    Тестирует эндпоинт DELETE /api/v1/users/{user_id} для удаления пользователя.
 
     :param async_session: Асинхронная сессия базы данных.
     :type async_session: AsyncSession
@@ -185,14 +185,14 @@ async def test_delete_user(async_session: AsyncSession, async_client: AsyncClien
     user = await create_user(async_session, user_data)
 
     # Удаляем пользователя
-    response = await async_client.delete(f"/v1/users/{user.id}")
+    response = await async_client.delete(f"/api/v1/users/{user.id}")
     assert response.status_code == 204
 
 
 @pytest.mark.asyncio
 async def test_delete_user_when_none_exist(async_session: AsyncSession, async_client: AsyncClient) -> None:
     """
-    Тестирует эндпоинт DELETE /v1/users/{user_id} для удаления пользователя.
+    Тестирует эндпоинт DELETE /api/v1/users/{user_id} для удаления пользователя.
 
     :param async_session: Асинхронная сессия базы данных.
     :type async_session: AsyncSession
@@ -202,7 +202,7 @@ async def test_delete_user_when_none_exist(async_session: AsyncSession, async_cl
     :rtype: None
     """
     # Удаляем пользователя
-    response = await async_client.delete("/v1/users/150")
+    response = await async_client.delete("/api/v1/users/150")
     assert response.status_code == 404
     delete_user = response.json()
     assert delete_user["detail"] == "User not found"
@@ -211,7 +211,7 @@ async def test_delete_user_when_none_exist(async_session: AsyncSession, async_cl
 @pytest.mark.asyncio
 async def test_fetch_users_from_api(async_client: AsyncClient, respx_mock: MockRouter) -> None:
     """
-    Тестирует эндпоинт POST /v1/users/fetch для загрузки пользователей из API randomuser.me.
+    Тестирует эндпоинт POST /api/v1/users/fetch для загрузки пользователей из API randomuser.me.
 
     :param async_client: Асинхронный тестовый клиент FastAPI.
     :type async_client: AsyncClient
@@ -299,13 +299,13 @@ async def test_fetch_users_from_api(async_client: AsyncClient, respx_mock: MockR
 
     respx_mock.get(settings.RANDOMUSER_API_URL).mock(return_value=Response(200, json=mock_users))
 
-    response = await async_client.post("/v1/users/fetch?count=2")
+    response = await async_client.post("/api/v1/users/fetch?count=2")
     assert response.status_code == 200
     result = response.json()
     assert len(result) == 2
 
     # Проверяем, что пользователи сохранились в БД
-    users_response = await async_client.get("/v1/users?limit=2&offset=0")
+    users_response = await async_client.get("/api/v1/users?limit=2&offset=0")
     users = users_response.json()
     assert len(users) == 2
     assert users[0]["first_name"] == "Jennie"

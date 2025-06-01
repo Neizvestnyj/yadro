@@ -20,7 +20,6 @@ async def get_random_user(db: AsyncSession = db_dependency) -> UserOut:
     :rtype: UserOut
     :raises HTTPException: Если в базе нет пользователей.
     """
-    db = db or Depends(get_db)
     user = await get_random_user_service(db)
     if not user:
         raise HTTPException(status_code=404, detail="User not found") from None

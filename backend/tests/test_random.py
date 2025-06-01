@@ -11,7 +11,7 @@ from app.services.user_service import create_user
 @pytest.mark.asyncio
 async def test_get_random_user(async_session: AsyncSession, async_client: AsyncClient) -> None:
     """
-    Тестирует эндпоинт GET /v1/random/ для получения рандомного пользователя.
+    Тестирует эндпоинт GET /api/v1/random/ для получения рандомного пользователя.
 
     :param async_session: Асинхронная сессия базы данных.
     :type async_session: AsyncSession
@@ -29,7 +29,7 @@ async def test_get_random_user(async_session: AsyncSession, async_client: AsyncC
         picture="http://example.com/tom.jpg",
     )
     await create_user(async_session, user)
-    response = await async_client.get("/v1/random")
+    response = await async_client.get("/api/v1/random")
     assert response.status_code == 200
     user_data: dict[str, Any] = response.json()
     assert user_data["email"] == "tom.wilson@example.com"
@@ -38,7 +38,7 @@ async def test_get_random_user(async_session: AsyncSession, async_client: AsyncC
 @pytest.mark.asyncio
 async def test_get_random_user_when_none_exist(async_session: AsyncSession, async_client: AsyncClient) -> None:
     """
-    Тестирует эндпоинт GET /v1/random/ для получения рандомного пользователя.
+    Тестирует эндпоинт GET /api/v1/random/ для получения рандомного пользователя.
 
     :param async_session: Асинхронная сессия базы данных.
     :type async_session: AsyncSession
@@ -47,7 +47,7 @@ async def test_get_random_user_when_none_exist(async_session: AsyncSession, asyn
     :returns: Ничего не возвращает.
     :rtype: None
     """
-    response = await async_client.get("/v1/random")
+    response = await async_client.get("/api/v1/random")
     assert response.status_code == 404
     get_user = response.json()
     assert get_user["detail"] == "User not found"
