@@ -24,7 +24,7 @@ const UserPage = () => {
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const response = await axios.get(`http://localhost:8000/v1/users/${id}`, {
+                const response = await axios.get(`http://localhost:8000/api/v1/users/${id}`, {
                     timeout: 5000,
                 });
                 setUser(response.data);

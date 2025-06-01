@@ -5,6 +5,7 @@ from fastapi import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.cache import RedisCache, get_cache
 from app.db.session import get_db
 from app.schemas.user import UserOut, UserUpdate
 from app.services.user_service import (
@@ -15,9 +16,10 @@ from app.services.user_service import (
     update_user_service,
 )
 
-router: APIRouter = APIRouter(prefix="/v1", tags=["users"])
+router: APIRouter = APIRouter(prefix="/api/v1", tags=["users"])
 
 db_dependency = Depends(get_db)
+redis_dependency = Depends(get_cache)
 
 
 @router.post("/users/fetch", response_model=list[UserOut])
@@ -41,7 +43,9 @@ async def fetch_users(count: int, db: AsyncSession = db_dependency) -> list[User
 
 
 @router.get("/users", response_model=list[UserOut])
-async def read_users(limit: int = 10, offset: int = 0, db: AsyncSession = db_dependency) -> list[UserOut]:
+async def read_users(
+    limit: int = 10, offset: int = 0, db: AsyncSession = db_dependency, cache: RedisCache = redis_dependency
+) -> list[UserOut]:
     """
     Получает список пользователей с пагинацией.
 
@@ -51,14 +55,16 @@ async def read_users(limit: int = 10, offset: int = 0, db: AsyncSession = db_dep
     :type offset: int
     :param db: Асинхронная сессия SQLAlchemy.
     :type db: AsyncSession
+    :param cache: Класс для работы с Redis кэшем.
+    :type cache: RedisCache
     :returns: Список пользователей.
-    :rtype: List[UserOut]
+    :rtype: list[UserOut]
     """
-    return await get_users_service(db, limit, offset)
+    return await get_users_service(db, cache, limit, offset)
 
 
 @router.get("/users/{user_id}", response_model=UserOut)
-async def read_user(user_id: int, db: AsyncSession = db_dependency) -> UserOut:
+async def read_user(user_id: int, db: AsyncSession = db_dependency, cache: RedisCache = redis_dependency) -> UserOut:
     """
     Получает пользователя по ID.
 
@@ -66,18 +72,22 @@ async def read_user(user_id: int, db: AsyncSession = db_dependency) -> UserOut:
     :type user_id: int
     :param db: Асинхронная сессия SQLAlchemy.
     :type db: AsyncSession
+    :param cache: Класс для работы с Redis кэшем.
+    :type cache: RedisCache
     :returns: Данные пользователя.
     :rtype: UserOut
     :raises HTTPException: Если пользователь не найден.
     """
-    user = await get_user_service(db, user_id)
+    user = await get_user_service(db, cache, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found") from None
     return user
 
 
 @router.put("/users/{user_id}", response_model=UserOut)
-async def update_user(user_id: int, user: UserUpdate, db: AsyncSession = db_dependency) -> UserOut:
+async def update_user(
+    user_id: int, user: UserUpdate, db: AsyncSession = db_dependency, cache: RedisCache = redis_dependency
+) -> UserOut:
     """
     Обновляет данные пользователя.
 
@@ -87,18 +97,20 @@ async def update_user(user_id: int, user: UserUpdate, db: AsyncSession = db_depe
     :type user: UserUpdate
     :param db: Асинхронная сессия SQLAlchemy.
     :type db: AsyncSession
+        :param cache: Класс для работы с Redis кэшем.
+    :type cache: RedisCache
     :returns: Обновленные данные пользователя.
     :rtype: UserOut
     :raises HTTPException: Если пользователь не найден.
     """
-    updated_user = await update_user_service(db, user_id, user)
+    updated_user = await update_user_service(db, cache, user_id, user)
     if not updated_user:
         raise HTTPException(status_code=404, detail="User not found") from None
     return updated_user
 
 
 @router.delete("/users/{user_id}", status_code=204)
-async def delete_user(user_id: int, db: AsyncSession = db_dependency) -> None:
+async def delete_user(user_id: int, db: AsyncSession = db_dependency, cache: RedisCache = redis_dependency) -> None:
     """
     Удаляет пользователя по ID.
 
@@ -106,10 +118,12 @@ async def delete_user(user_id: int, db: AsyncSession = db_dependency) -> None:
     :type user_id: int
     :param db: Асинхронная сессия SQLAlchemy.
     :type db: AsyncSession
+        :param cache: Класс для работы с Redis кэшем.
+    :type cache: RedisCache
     :returns: Ничего не возвращает.
     :rtype: None
     :raises HTTPException: Если пользователь не найден.
     """
-    success: bool = await delete_user_service(db, user_id)
+    success: bool = await delete_user_service(db, cache, user_id)
     if not success:
         raise HTTPException(status_code=404, detail="User not found") from None

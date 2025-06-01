@@ -5,16 +5,17 @@
 
 ## 🛠 Технологический стек
 
-| Компонент       | Технологии                | Обоснование выбора                             |
-|-----------------|---------------------------|------------------------------------------------|
-| Бэкенд          | FastAPI                   | Асинхронность, встроенная документация OpenAPI |
-| База данных     | PostgreSQL                | Надежность, поддержка сложных запросов         |
-| ORM             | SQLAlchemy + asyncpg      | Асинхронный доступ к БД                        |
-| Кэш             | Redis                     | Быстрый доступ к данным, поддержка pub/sub     |
-| Фронтенд        | React                     | Компонентный подход, быстрый рендеринг         |
-| Мониторинг      | Prometheus, Grafana, Loki | Комплексный мониторинг метрик и логов          |
-| Контейнеризация | Docker                    | Упрощение развертывания                        |
-| Тестирование    | Pytest                    | Поддержка моков и асинхронных тестов           |
+| Компонент       | Технологии                | Обоснование выбора                                                     |
+|-----------------|---------------------------|------------------------------------------------------------------------|
+| Бэкенд          | FastAPI                   | Асинхронность, встроенная документация OpenAPI                         |
+| База данных     | PostgreSQL                | Надежность, поддержка сложных запросов                                 |
+| ORM             | SQLAlchemy + asyncpg      | Асинхронный доступ к БД                                                |
+| Кэш             | Redis                     | Быстрый доступ к данным, поддержка pub/sub                             |
+| Фронтенд        | React                     | Компонентный подход, быстрый рендеринг                                 |
+| Веб-сервер	     | Nginx                     | Высокая производительность, статическая отдача, проксирование запросов |
+| Мониторинг      | Prometheus, Grafana, Loki | Комплексный мониторинг метрик и логов                                  |
+| Контейнеризация | Docker                    | Упрощение развертывания                                                |
+| Тестирование    | Pytest                    | Поддержка моков и асинхронных тестов                                   |
 
 ## ⚙️ Требования
 
@@ -44,7 +45,7 @@
    ```
 
 3. Настройте БД:
-   ```shell
+   ```psql
    createdb randomuser_db
    ```
 
@@ -58,7 +59,12 @@
    alembic upgrade head
    ```
 
-6. Запустите серверы:
+6. Запустите REdis
+   ```shell
+   docker run --rm -d --name redis_test -p 6379:6379 redis:7 redis-server --save "" --appendonly no
+   ```
+
+7. Запустите серверы:
    ```shell
    # Бэкенд
    uvicorn app.main:app --reload
@@ -67,7 +73,10 @@
    npm start
    ```
 
-Приложение будет доступно по адресу: [http://localhost:3001](http://localhost:3001)
+После запуска:
+
+- Фронтенд: [http://localhost:3001](http://localhost:3001)
+- API документация: [http://localhost:3001/docs](http://localhost:3001/docs)
 
 ### Docker-запуск
 
@@ -78,17 +87,19 @@ docker-compose up -d --build
 
 После запуска:
 
-- Фронтенд: [http://localhost:3001](http://localhost:3001)
-- API документация: [http://localhost:8000/docs](http://localhost:8000/docs)
+- Фронтенд: [http://localhost](http://localhost)
+- API документация: [http://localhost/docs](http://localhost/docs)
 
 ## 📡 API Endpoints
 
-| Метод | Путь                     | Описание                          |
-|-------|--------------------------|-----------------------------------|
-| GET   | /users?limit=10&offset=0 | Список пользователей с пагинацией |
-| POST  | /users/fetch?count=100   | Загрузка пользователей из API     |
-| GET   | /users/{user_id}         | Детали конкретного пользователя   |
-| GET   | /users/random            | Случайный пользователь            |
+| Метод  | Путь                       | Описание                                   |
+|--------|----------------------------|--------------------------------------------|
+| GET    | v1/users?limit=10&offset=0 | Список пользователей с пагинацией          |
+| POST   | v1/users/fetch?count=100   | Загрузка пользователей из API              |
+| GET    | v1/users/{user_id}         | Детали конкретного пользователя            |
+| PUT    | v1/users/{user_id}         | Обновление данных конкретного пользователя |
+| DELETE | v1/users/{user_id}         | Удаление конкретного пользователя          |
+| GET    | v1/users/random            | Случайный пользователь                     |
 
 ## 🧪 Тестирование
 
@@ -103,23 +114,23 @@ pytest tests/ -v
 Запросите дополнительно пользователей для теста (выполните 3 раза, должно быть > 10000 пользователей)
 
 ```shell
-curl -X POST "http://localhost:8000/v1/users/fetch?count=5000"
+curl -X POST "http://localhost/v1/users/fetch?count=5000"
 ```
 
 ```shell
-locust -f tests/locustfile.py --host=http://localhost:8000 --users 1000 --spawn-rate 50 --headless --run-time 3m --csv=results
+locust -f tests/load/locustfile.py --host=http://localhost --users 100 --spawn-rate 10 --headless --run-time 3m --csv=results
 ```
 
 или с веб-интерфейсом
 
 ```shell
-locust -f tests/locustfile.py --host=http://localhost:8000 --web-host=localhost
+locust -f tests/load/locustfile.py --host=http://localhost --web-host=localhost
 ```
 
 | Конфигурация | RPS   | Медианное время ответа (мс) | Количество запросов | Среднее время ответа (мс) |
 |--------------|-------|-----------------------------|---------------------|---------------------------|
-| Без Redis    | 211.4 | 3900                        | 38616               | 4269.85                   |
-| С Redis      | 188.5 | 4400                        | 33420               | 4924.32                   |
+| Без Redis    | 198.3 | 210                         | 32413               | 235.79                    |
+| С Redis      | 217.5 | 180                         | 34009               | 211.31                    |
 
 ### Проверка доступности контейнеров с метриками
 
@@ -132,10 +143,6 @@ curl http://localhost:9090/targets
 curl http://localhost:8000/metrics
 ```
 
-## 🔍 Документация
-
-- Swagger UI: [http://localhost:8000/docs](http://localhost:8000/docs)
-
 ## 📊 Мониторинг с Grafana Dashboard
 
 1. Откройте Grafana: [http://localhost:3000](http://localhost:3000)
@@ -144,10 +151,11 @@ curl http://localhost:8000/metrics
 
 2. Импортируйте дашборды:
    Dashboards → New → Import → Upload JSON
-    - [Backend-dashboard.json](backend/monitoring/grafana/Backend-dashboard.json): [Grafana Labs - 16110](https://grafana.com/grafana/dashboards/16110-fastapi-observability/)
-    - [Redis-dashboard.json](backend/monitoring/grafana/Redis-dashboard.json): [Grafana Labs - 763](https://grafana.com/grafana/dashboards/763-redis-dashboard-for-prometheus-redis-exporter-1-x/)
-    - [Docker_Container_and_Host_Metrics.json](backend/monitoring/grafana/Docker_Container_and_Host_Metrics.json): [Grafana Labs - 10619](https://grafana.com/grafana/dashboards/10619-docker-host-container-overview/) -
+    - [Backend-dashboard.json](backend/monitoring/grafana/dashboards/Backend-dashboard.json): [Grafana Labs - 16110](https://grafana.com/grafana/dashboards/16110-fastapi-observability/)
+    - [Redis-dashboard.json](backend/monitoring/grafana/dashboards/Redis-dashboard.json): [Grafana Labs - 763](https://grafana.com/grafana/dashboards/763-redis-dashboard-for-prometheus-redis-exporter-1-x/)
+    - [Docker_Container_and_Host_Metrics.json](backend/monitoring/grafana/dashboards/Docker_Container_and_Host_Metrics.json): [Grafana Labs - 10619](https://grafana.com/grafana/dashboards/10619-docker-host-container-overview/) -
       *только на Unix системах, на Windows часть метрик будет недоступна*
+    - [NGINX-1748555632072.json](backend/monitoring/grafana/dashboards/NGINX.json): [GitHub - nginx-prometheus-exporter](https://github.com/nginx/nginx-prometheus-exporter/blob/main/grafana/dashboard.json)
 
 - **Prometheus**: Собирает метрики FastAPI (`http://localhost:8000/metrics`).
 - **Loki**: Собирает JSON-логи приложения.

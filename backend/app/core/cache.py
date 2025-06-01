@@ -1,3 +1,4 @@
+import builtins
 import json
 
 import redis.asyncio as redis
@@ -12,8 +13,15 @@ class RedisCache:
     """Клиент для работы с Redis."""
 
     def __init__(self) -> None:
-        """Инициализирует подключение к Redis."""
-        self.client: redis.Redis = redis.from_url(settings.REDIS_URL, decode_responses=True)
+        """Инициализирует RedisCache без немедленного подключения."""
+        self._client: redis.Redis | None = None
+
+    @property
+    def client(self) -> redis.Redis:
+        """Лениво создает и возвращает клиент Redis."""
+        if self._client is None:
+            self._client = redis.from_url(settings.REDIS_URL, decode_responses=True)
+        return self._client
 
     async def get(self, key: str) -> JsonType | None:
         """
@@ -44,11 +52,11 @@ class RedisCache:
         :returns: None
         """
         try:
-            await self.client.setex(key, ttl, json.dumps(value))
+            await self.client.setex(key, ttl, json.dumps(value, default=str))
         except Exception as e:
             logger.error(f"Redis set error: {e}")
 
-    async def delete(self, key: str) -> None:
+    async def delete(self, key: str | tuple) -> None:
         """
         Удаляет ключ из кэша.
 
@@ -57,9 +65,42 @@ class RedisCache:
         :returns: None
         """
         try:
-            await self.client.delete(key)
+            if isinstance(key, tuple):
+                await self.client.delete(*key)
+            else:
+                await self.client.delete(key)
         except Exception as e:
             logger.error(f"Redis delete error: {e}")
+
+    async def sadd(self, key: str, member: str) -> None:
+        """
+        Добавляет элемент в множество Redis по указанному ключу.
+
+        :param key: Ключ множества.
+        :type key: str
+        :param member: Элемент для добавления в множество.
+        :type member: str
+        :returns: None
+        """
+        try:
+            await self.client.sadd(key, member)
+        except Exception as e:
+            logger.error(f"Redis sadd error: {e}")
+
+    async def smembers(self, key: str) -> builtins.set[str]:
+        """
+        Получает все элементы множества Redis по указанному ключу.
+
+        :param key: Ключ множества.
+        :type key: str
+        :returns: Множество элементов.
+        :rtype: Set[str]
+        """
+        try:
+            return await self.client.smembers(key)
+        except Exception as e:
+            logger.error(f"Redis smembers error: {e}")
+            return set()
 
     async def close(self) -> None:
         """
@@ -71,3 +112,8 @@ class RedisCache:
 
 
 cache = RedisCache()
+
+
+async def get_cache() -> RedisCache:
+    """Предоставляет класс RedisCache для зависимостей FastAPI."""
+    return cache

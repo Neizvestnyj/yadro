@@ -9,7 +9,7 @@ const RandomUserPage = () => {
     useEffect(() => {
         const fetchRandomUser = async () => {
             try {
-                const response = await axios.get('http://localhost:8000/v1/random');
+                const response = await axios.get('http://localhost:8000/api/v1/random');
                 setUser(response.data);
             } catch (error) {
                 console.error('Error fetching random user:', error);

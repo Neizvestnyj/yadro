@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import func
 
-from app.core.cache import cache
+from app.core.cache import RedisCache
 from app.core.logging import logger
 from app.db.crud.users import create_user, delete_user, get_user, get_users, update_user
 from app.db.models.user import User
@@ -27,9 +27,13 @@ async def fetch_and_save_users(db: AsyncSession, count: int) -> list[UserOut]:
     if count > 5000:
         raise ValueError("Too many users requested, max - 5000")
 
-    users_data: dict = await fetch_random_users(count)  # Получаем данные пользователей из randomuser.me.
+    users_data_response: dict = await fetch_random_users(count)  # Получаем данные пользователей из randomuser.me.
+    if not users_data_response or "results" not in users_data_response:
+        logger.error("Failed to fetch users or response format is incorrect.")
+        return []
+
     users: list[UserOut] = []
-    for user_data in users_data["results"]:
+    for user_data in users_data_response["results"]:
         try:
             user = UserCreate(
                 gender=user_data["gender"],
@@ -77,17 +81,17 @@ async def fetch_and_save_users(db: AsyncSession, count: int) -> list[UserOut]:
                 logger.error(f"Database integrity error: {e}")
             continue
 
-    # Инвалидация кэша списка пользователей
-    await cache.delete("users:*")
     return users
 
 
-async def get_users_service(db: AsyncSession, limit: int, offset: int) -> list[UserOut]:
+async def get_users_service(db: AsyncSession, cache: RedisCache, limit: int, offset: int) -> list[UserOut]:
     """
     Получает список пользователей с пагинацией.
 
     :param db: Асинхронная сессия SQLAlchemy.
     :type db: AsyncSession
+    :param cache: Класс для работы с Redis кэшем.
+    :type cache: RedisCache
     :param limit: Количество записей на страницу.
     :type limit: int
     :param offset: Смещение для пагинации.
@@ -101,16 +105,21 @@ async def get_users_service(db: AsyncSession, limit: int, offset: int) -> list[U
         return [UserOut(**user) for user in cached_users]
 
     users: list[UserOut] = await get_users(db, limit, offset)
-    await cache.set(cache_key, [user.model_dump() for user in users], ttl=300)
+    if users:
+        await cache.set(cache_key, [user.model_dump() for user in users], ttl=300)
+        # Добавляем ключ страницы в множество user_pages
+        await cache.sadd("user_pages", cache_key)
     return users
 
 
-async def get_user_service(db: AsyncSession, user_id: int) -> UserOut | None:
+async def get_user_service(db: AsyncSession, cache: RedisCache, user_id: int) -> UserOut | None:
     """
     Получает пользователя по ID.
 
     :param db: Асинхронная сессия SQLAlchemy.
     :type db: AsyncSession
+    :param cache: Класс для работы с Redis кэшем.
+    :type cache: RedisCache
     :param user_id: ID пользователя.
     :type user_id: int
     :returns: Пользователь или None, если не найден.
@@ -127,12 +136,16 @@ async def get_user_service(db: AsyncSession, user_id: int) -> UserOut | None:
     return user
 
 
-async def update_user_service(db: AsyncSession, user_id: int, user_data: UserUpdate) -> UserOut | None:
+async def update_user_service(
+    db: AsyncSession, cache: RedisCache, user_id: int, user_data: UserUpdate
+) -> UserOut | None:
     """
     Обновляет данные пользователя.
 
     :param db: Асинхронная сессия SQLAlchemy.
     :type db: AsyncSession
+    :param cache: Класс для работы с Redis кэшем.
+    :type cache: RedisCache
     :param user_id: ID пользователя.
     :type user_id: int
     :param user_data: Данные для обновления.
@@ -144,16 +157,21 @@ async def update_user_service(db: AsyncSession, user_id: int, user_data: UserUpd
     if user:
         # Инвалидация кэша
         await cache.delete(f"user:{user_id}")
-        await cache.delete("users:*")
+        # Инвалидация кэша всех страниц
+        page_keys = await cache.smembers("user_pages")
+        if page_keys:
+            await cache.delete(*page_keys, "user_pages")
     return user
 
 
-async def delete_user_service(db: AsyncSession, user_id: int) -> bool:
+async def delete_user_service(db: AsyncSession, cache: RedisCache, user_id: int) -> bool:
     """
     Удаляет пользователя по ID.
 
     :param db: Асинхронная сессия SQLAlchemy.
     :type db: AsyncSession
+    :param cache: Класс для работы с Redis кэшем.
+    :type cache: RedisCache
     :param user_id: ID пользователя.
     :type user_id: int
     :returns: True, если пользователь удален, False, если не найден.
@@ -161,9 +179,10 @@ async def delete_user_service(db: AsyncSession, user_id: int) -> bool:
     """
     success = await delete_user(db, user_id)
     if success:
-        # Инвалидация кэша
         await cache.delete(f"user:{user_id}")
-        await cache.delete("users:*")
+        page_keys = await cache.smembers("user_pages")
+        if page_keys:
+            await cache.delete(*page_keys, "user_pages")
     return success
 
 
