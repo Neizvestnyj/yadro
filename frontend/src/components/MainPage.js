@@ -41,7 +41,7 @@ const MainPage = () => {
     const fetchUsers = useCallback(async (offset) => {
         console.log(`Загрузка: offset=${offset}, limit=${fetchSize}`);
         try {
-            const response = await axios.get(`http://localhost:8000/v1/users?limit=${fetchSize}&offset=${offset}`, {
+            const response = await axios.get(`http://localhost:8000/api/v1/users?limit=${fetchSize}&offset=${offset}`, {
                 timeout: 5000,
             });
             console.log(`Загружено ${response.data.length} пользователей`);
@@ -102,7 +102,7 @@ const MainPage = () => {
         setError('');
         setIsFetching(true);
         try {
-            await axios.post(`http://localhost:8000/v1/users/fetch?count=${count}`);
+            await axios.post(`http://localhost:8000/api/v1/users/fetch?count=${count}`);
             setUsers([]); // Очищаем текущих пользователей
             window.userCache.users = []; // Очищаем кеш
             setPage(1); // Сбрасываем на первую страницу
