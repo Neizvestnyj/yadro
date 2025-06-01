@@ -118,13 +118,13 @@ curl -X POST "http://localhost/v1/users/fetch?count=5000"
 ```
 
 ```shell
-locust -f tests/locustfile.py --host=http://localhost --users 100 --spawn-rate 10 --headless --run-time 3m --csv=results
+locust -f tests/load/locustfile.py --host=http://localhost --users 100 --spawn-rate 10 --headless --run-time 3m --csv=results
 ```
 
 или с веб-интерфейсом
 
 ```shell
-locust -f tests/locustfile.py --host=http://localhost --web-host=localhost
+locust -f tests/load/locustfile.py --host=http://localhost --web-host=localhost
 ```
 
 | Конфигурация | RPS   | Медианное время ответа (мс) | Количество запросов | Среднее время ответа (мс) |

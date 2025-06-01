@@ -25,35 +25,6 @@ def anyio_backend() -> Literal["asyncio"]:
 
 
 @pytest.fixture
-async def mock_cache() -> MagicMock:
-    """
-    Предоставляет замоканную версию RedisCache для тестов, переопределяя FastAPI зависимость get_cache.
-
-    Все основные методы RedisCache (get, set, delete, sadd, smembers, close)
-    замещены на асинхронные мок-объекты для отслеживания вызовов и предотвращения
-    реального подключения к Redis.
-
-    :returns: Замоканный RedisCache.
-    :rtype: MagicMock
-    """
-    mock = MagicMock()
-    mock.get = AsyncMock()
-    mock.set = AsyncMock()
-    mock.delete = AsyncMock()
-    mock.sadd = AsyncMock()
-    mock.smembers = AsyncMock()
-    mock.close = AsyncMock()
-
-    # Переопределяем зависимость FastAPI
-    app.dependency_overrides[get_cache] = lambda: mock
-
-    yield mock
-
-    # Чистим переопределения после теста
-    app.dependency_overrides.clear()
-
-
-@pytest.fixture
 async def async_client(async_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     """
     Предоставляет асинхронный тестовый клиент FastAPI с переопределённой зависимостью get_db.
@@ -98,3 +69,33 @@ async def async_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
     await async_engine.dispose()
+
+
+@pytest.fixture
+async def mock_cache() -> MagicMock:
+    """
+    Предоставляет замоканную версию RedisCache для тестов, переопределяя FastAPI зависимость get_cache.
+
+    Все основные методы RedisCache (get, set, delete, sadd, smembers, close)
+    замещены на асинхронные мок-объекты для отслеживания вызовов и предотвращения
+    реального подключения к Redis.
+
+    :returns: Замоканный RedisCache.
+    :rtype: MagicMock
+    """
+    mock = MagicMock()
+    mock.get = AsyncMock(return_value=None)
+    mock.set = AsyncMock()
+    mock.delete = AsyncMock()
+    mock.sadd = AsyncMock()
+    mock.smembers = AsyncMock()
+    mock.close = AsyncMock()
+
+    async def _override_get_cache():
+        return mock
+
+    app.dependency_overrides[get_cache] = _override_get_cache
+
+    yield mock
+
+    app.dependency_overrides.clear()

@@ -40,6 +40,8 @@ gevent = "^24.11.1"
 pytest-cov = "^5.0.0"
 coveralls = { version = "^4.0.1", markers = "python_version < '3.13'" }
 locust = "^2.37.5"
+aiosqlite = "^0.21.0"
+faker = "^37.3.0"
 
 [build-system]
 requires = ["poetry-core"]

@@ -1,17 +1,22 @@
 from typing import Any
+from unittest.mock import MagicMock, patch
 
 from httpx import AsyncClient, Response
 import pytest
 from respx import MockRouter
 from sqlalchemy.ext.asyncio import AsyncSession
+from tests.utils.mocks import fake_fetch_random_users
 
 from app.core.config import settings
 from app.schemas.user import UserCreate
 from app.services.user_service import create_user, fetch_and_save_users
 
 
+@patch("app.services.user_service.fetch_random_users", new=fake_fetch_random_users)
 @pytest.mark.asyncio
-async def test_get_users_paginated(async_session: AsyncSession, async_client: AsyncClient) -> None:
+async def test_get_users_paginated(
+    async_session: AsyncSession, async_client: AsyncClient, mock_cache: MagicMock
+) -> None:
     """
     Тестирует эндпоинт GET /api/v1/users с пагинацией.
 
@@ -19,6 +24,10 @@ async def test_get_users_paginated(async_session: AsyncSession, async_client: As
     :type async_session: AsyncSession
     :param async_client: Асинхронный тестовый клиент FastAPI.
     :type async_client: AsyncClient
+    :param mock_cache: Замоканный объект RedisCache, переопределяющий кеш в тестах.
+                   Все методы (get, set, sadd и пр.) являются асинхронными моками,
+                   что позволяет контролировать поведение кеша и предотвращать реальные подключения.
+    :type mock_cache: MagicMock
     :returns: Ничего не возвращает.
     :rtype: None
     """
@@ -39,8 +48,9 @@ async def test_get_users_paginated(async_session: AsyncSession, async_client: As
     assert users_resp[0]["first_name"] == users[10].first_name
 
 
+@patch("app.services.user_service.fetch_random_users", new=fake_fetch_random_users)
 @pytest.mark.asyncio
-async def test_get_users(async_session: AsyncSession, async_client: AsyncClient) -> None:
+async def test_get_users(async_session: AsyncSession, async_client: AsyncClient, mock_cache: MagicMock) -> None:
     """
     Тестирует эндпоинт GET /api/v1/users для получения списка пользователей.
 
@@ -48,6 +58,10 @@ async def test_get_users(async_session: AsyncSession, async_client: AsyncClient)
     :type async_session: AsyncSession
     :param async_client: Асинхронный тестовый клиент FastAPI.
     :type async_client: AsyncClient
+    :param mock_cache: Замоканный объект RedisCache, переопределяющий кеш в тестах.
+                   Все методы (get, set, sadd и пр.) являются асинхронными моками,
+                   что позволяет контролировать поведение кеша и предотвращать реальные подключения.
+    :type mock_cache: MagicMock
     :returns: Ничего не возвращает.
     :rtype: None
     """

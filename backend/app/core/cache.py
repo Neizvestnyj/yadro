@@ -114,6 +114,6 @@ class RedisCache:
 cache = RedisCache()
 
 
-def get_cache() -> RedisCache:
+async def get_cache() -> RedisCache:
     """Предоставляет класс RedisCache для зависимостей FastAPI."""
     return cache
