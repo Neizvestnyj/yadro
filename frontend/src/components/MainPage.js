@@ -22,9 +22,9 @@ const MainPage = () => {
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const [error, setError] = useState('');
-    const limit = 10; // Константа в области видимости компонента, стабильна
-    const bufferSize = 200; // Константа, стабильна
-    const fetchSize = 50; // Константа, стабильна
+    const limit = 10; // Константа в области видимости компонента
+    const bufferSize = 200;
+    const fetchSize = 50;
     const navigate = useNavigate(); // navigate стабильна
     const fetchTimeoutRef = useRef(null);
 
