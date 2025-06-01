@@ -6,10 +6,10 @@ from httpx import ASGITransport, AsyncClient
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+from app.core.cache import get_cache
 from app.core.config import settings
 from app.db.models import Base
 from app.db.session import get_db as get_session
-from app.core.cache import get_cache
 from app.main import app
 
 
