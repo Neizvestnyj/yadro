@@ -1,3 +1,4 @@
+import builtins
 import json
 
 import redis.asyncio as redis
@@ -60,6 +61,36 @@ class RedisCache:
             await self.client.delete(key)
         except Exception as e:
             logger.error(f"Redis delete error: {e}")
+
+    async def sadd(self, key: str, member: str) -> None:
+        """
+        Добавляет элемент в множество Redis по указанному ключу.
+
+        :param key: Ключ множества.
+        :type key: str
+        :param member: Элемент для добавления в множество.
+        :type member: str
+        :returns: None
+        """
+        try:
+            await self.client.sadd(key, member)
+        except Exception as e:
+            logger.error(f"Redis sadd error: {e}")
+
+    async def smembers(self, key: str) -> builtins.set[str]:
+        """
+        Получает все элементы множества Redis по указанному ключу.
+
+        :param key: Ключ множества.
+        :type key: str
+        :returns: Множество элементов.
+        :rtype: Set[str]
+        """
+        try:
+            return await self.client.smembers(key)
+        except Exception as e:
+            logger.error(f"Redis smembers error: {e}")
+            return set()
 
     async def close(self) -> None:
         """
