@@ -91,7 +91,7 @@ async def mock_cache() -> MagicMock:
     mock.smembers = AsyncMock()
     mock.close = AsyncMock()
 
-    async def _override_get_cache():
+    async def _override_get_cache():  # noqa: ANN202
         return mock
 
     app.dependency_overrides[get_cache] = _override_get_cache

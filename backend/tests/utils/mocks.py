@@ -6,6 +6,16 @@ fake = Faker()
 
 
 async def fake_fetch_random_users(count: int) -> dict:
+    """
+    Асинхронно получает указанное количество фейковых случайных пользователей.
+
+    :param count: Количество случайных пользователей для получения.
+    :type count: int
+    :return: Словарь с данными полученных случайных пользователей.
+    :rtype: dict
+    :raises ValueError: Если count меньше или равен нулю.
+    :raises Exception: При общих ошибках получения данных.
+    """
     results = []
     for _ in range(count):
         user = {
