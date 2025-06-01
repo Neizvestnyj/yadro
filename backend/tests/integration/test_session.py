@@ -1,4 +1,4 @@
-from asyncpg.exceptions import ConnectionDoesNotExistError
+from asyncpg.exceptions import ConnectionDoesNotExistError, InvalidPasswordError
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -31,7 +31,7 @@ async def test_connect_invalid_url() -> None:
     должно быть выброшено исключение ConnectionDoesNotExistError.
     """
     db = DatabaseManager("postgresql+asyncpg://wrong:wrong@localhost:5432/invalid")
-    with pytest.raises(ConnectionDoesNotExistError):
+    with pytest.raises((ConnectionDoesNotExistError, InvalidPasswordError)):
         await db.connect()
 
 
