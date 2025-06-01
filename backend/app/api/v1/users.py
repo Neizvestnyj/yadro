@@ -15,7 +15,7 @@ from app.services.user_service import (
     update_user_service,
 )
 
-router: APIRouter = APIRouter(prefix="/v1", tags=["users"])
+router: APIRouter = APIRouter(prefix="/api/v1", tags=["users"])
 
 db_dependency = Depends(get_db)
 
