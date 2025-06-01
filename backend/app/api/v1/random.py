@@ -5,7 +5,7 @@ from app.db.session import get_db
 from app.schemas.user import UserOut
 from app.services.user_service import get_random_user_service
 
-router: APIRouter = APIRouter(prefix="/v1", tags=["random"])
+router: APIRouter = APIRouter(prefix="/api/v1", tags=["random"])
 db_dependency = Depends(get_db)
 
 

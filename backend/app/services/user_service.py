@@ -27,9 +27,13 @@ async def fetch_and_save_users(db: AsyncSession, count: int) -> list[UserOut]:
     if count > 5000:
         raise ValueError("Too many users requested, max - 5000")
 
-    users_data: dict = await fetch_random_users(count)  # Получаем данные пользователей из randomuser.me.
+    users_data_response: dict = await fetch_random_users(count)  # Получаем данные пользователей из randomuser.me.
+    if not users_data_response or "results" not in users_data_response:
+        logger.error("Failed to fetch users or response format is incorrect.")
+        return []
+
     users: list[UserOut] = []
-    for user_data in users_data["results"]:
+    for user_data in users_data_response["results"]:
         try:
             user = UserCreate(
                 gender=user_data["gender"],
@@ -93,7 +97,16 @@ async def get_users_service(db: AsyncSession, limit: int, offset: int) -> list[U
     :returns: Список пользователей.
     :rtype: List[UserOut]
     """
+    cache_key = f"users:limit={limit}:offset={offset}"
+    cached_users = await cache.get(cache_key)
+    if cached_users:
+        return [UserOut(**user) for user in cached_users]
+
     users: list[UserOut] = await get_users(db, limit, offset)
+    if users:
+        await cache.set(cache_key, [user.model_dump() for user in users], ttl=300)
+        # Добавляем ключ страницы в множество user_pages
+        await cache.sadd("user_pages", cache_key)
     return users
 
 
@@ -136,6 +149,10 @@ async def update_user_service(db: AsyncSession, user_id: int, user_data: UserUpd
     if user:
         # Инвалидация кэша
         await cache.delete(f"user:{user_id}")
+        # Инвалидация кэша всех страниц
+        page_keys = await cache.smembers("user_pages")
+        if page_keys:
+            await cache.client.delete(*page_keys, "user_pages")
     return user
 
 
@@ -152,8 +169,10 @@ async def delete_user_service(db: AsyncSession, user_id: int) -> bool:
     """
     success = await delete_user(db, user_id)
     if success:
-        # Инвалидация кэша
         await cache.delete(f"user:{user_id}")
+        page_keys = await cache.client.smembers("user_pages")
+        if page_keys:
+            await cache.client.delete(*page_keys, "user_pages")
     return success
 
 
