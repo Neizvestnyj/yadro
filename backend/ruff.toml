@@ -1,8 +1,6 @@
-# Target Python version
 target-version = "py311"
 
-src = ["src", "tests", "migrations"]
-# exclude = ["**/migrations"]
+src = ["app", "tests", "migrations"]
 
 # Включаем все важные правила (вместо flake8 + isort + pycodestyle + pyflakes и т.п.)
 lint.select = [
@@ -32,7 +30,7 @@ line-length = 120
 
 # Порядок импортов: стандарт, сторонние, локальные
 [lint.isort]
-known-first-party = ["app", "api", "core", "db", "schemas", "services", "tasks"]
+known-first-party = ["app", "api", "core", "lifecycle", "db", "middleware", "schemas", "services"]
 known-third-party = ["pytest"]
 force-sort-within-sections = true
 combine-as-imports = true

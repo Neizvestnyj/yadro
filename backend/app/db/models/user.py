@@ -1,39 +1,38 @@
 from sqlalchemy import Column, DateTime, Float, Integer, String
 from sqlalchemy.sql import func
 
-from app.db.models import Base
+from app.db.models.base import Base
 
 
 class User(Base):
     """
     Модель пользователя для таблицы 'users'.
 
-    Атрибуты:
-        id (int): Уникальный идентификатор пользователя.
-        gender (str): Пол пользователя (например, 'male', 'female').
-        title (str): Обращение (например, 'Mr', 'Miss', 'Mrs').
-        first_name (str): Имя пользователя.
-        last_name (str): Фамилия пользователя.
-        street_number (int): Номер дома.
-        street_name (str): Название улицы.
-        city (str): Город.
-        state (str): Штат или регион.
-        country (str): Страна.
-        postcode (str): Почтовый индекс.
-        latitude (float): Широта.
-        longitude (float): Долгота.
-        timezone_offset (str): Смещение часового пояса (например, '+9:30').
-        phone (str): Основной телефон.
-        cell (str): Мобильный телефон.
-        email (str): Email пользователя.
-        external_id (str): Внешний идентификатор (например, SSN).
-        username (str): Имя пользователя для входа.
-        uuid (str): Уникальный UUID пользователя.
-        picture (str): URL фотографии пользователя (thumbnail).
-        dob (datetime): Дата рождения.
-        registered_at (datetime): Дата регистрации.
-        nat (str): Национальность (например, 'US').
-        created_at (datetime): Время создания записи.
+    id (int): Уникальный идентификатор пользователя.
+    gender (str): Пол пользователя (например, 'male', 'female').
+    title (str): Обращение (например, 'Mr', 'Miss', 'Mrs').
+    first_name (str): Имя пользователя.
+    last_name (str): Фамилия пользователя.
+    street_number (int): Номер дома.
+    street_name (str): Название улицы.
+    city (str): Город.
+    state (str): Штат или регион.
+    country (str): Страна.
+    postcode (str): Почтовый индекс.
+    latitude (float): Широта.
+    longitude (float): Долгота.
+    timezone_offset (str): Смещение часового пояса (например, '+9:30').
+    phone (str): Основной телефон.
+    cell (str): Мобильный телефон.
+    email (str): Email пользователя.
+    external_id (str): Внешний идентификатор (например, SSN).
+    username (str): Имя пользователя для входа.
+    uuid (str): Уникальный UUID пользователя.
+    picture (str): URL фотографии пользователя (thumbnail).
+    dob (datetime): Дата рождения.
+    registered_at (datetime): Дата регистрации.
+    nat (str): Национальность (например, 'US').
+    created_at (datetime): Время создания записи.
     """
 
     __tablename__ = "users"
