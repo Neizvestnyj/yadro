@@ -7,7 +7,6 @@ from pytest_mock import MockerFixture
 from app.core.logging import logger
 from app.db.session import db_manager
 from app.lifecycle.lifespan_events import app_lifespan
-from app.services.user_service import fetch_and_save_users
 
 
 async def test_app_lifespan_success(mocker: MockerFixture) -> None:
