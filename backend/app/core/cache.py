@@ -102,6 +102,26 @@ class RedisCache:
             logger.error(f"Redis smembers error: {e}")
             return set()
 
+    async def clear_set(self, key: str) -> None:
+        """
+        Очищает все элементы множества Redis, сохраняя сам ключ.
+
+        Получает все элементы множества с помощью команды ``smembers`` и удаляет их с помощью ``srem``.
+        Если множество пустое или ключ не существует, никаких действий не выполняется.
+        Ключ множества остается в Redis, что позволяет добавлять новые элементы в дальнейшем.
+
+        :param key: Ключ множества Redis для очистки.
+        :type key: str
+        :returns: None
+        :raises: Логирует ошибку в случае сбоя операции Redis, не выбрасывая исключение.
+        """
+        try:
+            members = await self.smembers(key)
+            if members:
+                await self.client.srem(key, *members)
+        except Exception as e:
+            logger.error(f"Redis clear set error: {e}")
+
     async def close(self) -> None:
         """
         Закрывает соединение с Redis.
