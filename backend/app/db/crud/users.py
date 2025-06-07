@@ -1,3 +1,4 @@
+from sqlalchemy import delete, insert, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -16,11 +17,11 @@ async def create_user(db: AsyncSession, user: UserCreate) -> UserOut:
     :returns: Созданный пользователь.
     :rtype: UserOut
     """
-    db_user = User(**user.model_dump())
-    db.add(db_user)
+    stmt = insert(User).values(**user.model_dump()).returning(User)
+    result = await db.execute(stmt)
     await db.commit()
-    await db.refresh(db_user)
-    user_out = UserOut.model_validate(db_user)
+    created_user = result.scalar_one()
+    user_out = UserOut.model_validate(created_user)
 
     return user_out
 
@@ -74,16 +75,19 @@ async def update_user(db: AsyncSession, user_id: int, user_data: UserUpdate) -> 
     :returns: Обновленный пользователь или None, если не найден.
     :rtype: UserOut | None
     """
-    result = await db.execute(select(User).filter_by(id=user_id))
-    user = result.scalar_one_or_none()
-    if not user:
+    values = user_data.model_dump(exclude_unset=True)
+    if not values:
         return None
-    for key, value in user_data.model_dump(exclude_unset=True).items():
-        setattr(user, key, value)
-    await db.commit()
-    await db.refresh(user)
 
-    return UserOut.model_validate(user)
+    stmt = update(User).where(User.id == user_id).values(**values).returning(User)
+    result = await db.execute(stmt)
+    await db.commit()
+    updated_user = result.scalar_one_or_none()
+
+    if updated_user is None:
+        return None
+
+    return UserOut.model_validate(updated_user)
 
 
 async def delete_user(db: AsyncSession, user_id: int) -> bool:
@@ -91,17 +95,12 @@ async def delete_user(db: AsyncSession, user_id: int) -> bool:
     Удаляет пользователя по ID.
 
     :param db: Асинхронная сессия SQLAlchemy.
-    :type db: AsyncSession
     :param user_id: ID пользователя.
-    :type user_id: int
     :returns: True, если пользователь удален, False, если не найден.
-    :rtype: bool
     """
-    result = await db.execute(select(User).filter_by(id=user_id))
-    user = result.scalar_one_or_none()
-    if not user:
-        return False
-    await db.delete(user)
+    stmt = delete(User).where(User.id == user_id).returning(User.id)
+    result = await db.execute(stmt)
     await db.commit()
+    deleted_id = result.scalar_one_or_none()
 
-    return True
+    return True if deleted_id else False

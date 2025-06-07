@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 import sqlalchemy
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import NullPool
 
 from app.core.config import settings
 from app.core.logging import logger
@@ -22,14 +23,23 @@ class DatabaseManager:
         if not url:
             url = settings.DATABASE_URL
 
+        if "pgbouncer" not in settings.DATABASE_URL:
+            engine_kwargs = {
+                "pool_size": 25,
+                "max_overflow": 10,
+                "pool_timeout": 30,
+                "pool_recycle": 1800,
+            }
+        else:
+            engine_kwargs = {"poolclass": NullPool}
+
+        logger.info(f"Engine settings: {engine_kwargs}")
+
         self.engine = create_async_engine(
             url,
             echo=False,
-            pool_size=25,
-            max_overflow=10,
-            pool_timeout=30,
-            pool_recycle=1800,  # Время жизни соединения в пуле перед пересозданием (сек)
             isolation_level="READ COMMITTED",
+            **engine_kwargs,
         )
         self.async_session = sessionmaker(self.engine, expire_on_commit=False, class_=AsyncSession)
 
