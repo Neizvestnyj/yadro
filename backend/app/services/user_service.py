@@ -158,9 +158,7 @@ async def update_user_service(
         # Инвалидация кэша
         await cache.delete(f"user:{user_id}")
         # Инвалидация кэша всех страниц
-        page_keys = await cache.smembers("user_pages")
-        if page_keys:
-            await cache.delete(*page_keys, "user_pages")
+        await cache.delete("user_pages")
     return user
 
 
@@ -180,9 +178,7 @@ async def delete_user_service(db: AsyncSession, cache: RedisCache, user_id: int)
     success = await delete_user(db, user_id)
     if success:
         await cache.delete(f"user:{user_id}")
-        page_keys = await cache.smembers("user_pages")
-        if page_keys:
-            await cache.delete(*page_keys, "user_pages")
+        await cache.delete("user_pages")
     return success
 
 
