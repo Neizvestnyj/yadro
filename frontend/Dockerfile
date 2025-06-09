@@ -4,6 +4,9 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
+
+# Исправляет права доступа для запуска react-scripts
+RUN chmod +x node_modules/.bin/react-scripts
 RUN npm run build
 
 # Stage 2: Serve static files with Nginx

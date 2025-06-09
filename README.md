@@ -3,6 +3,8 @@
 Веб-приложение для работы с API randomuser.me с пагинацией и детальной информацией о
 пользователях. [![Coverage Status](https://coveralls.io/repos/github/Neizvestnyj/yadro/badge.svg?branch=master)](https://coveralls.io/github/Neizvestnyj/yadro?branch=master)
 
+> Note: Последняя [версия проекта до дедлайна 24.05.2025](https://github.com/Neizvestnyj/yadro/tree/2cd6567d2afaa1b5ba2f3414f5504aec8f3954fb) без Nginx, Prometheus, Grafana, Loki, Redis
+
 ## 📑 Содержание
 
 - [🛠 Технологический стек](#-технологический-стек)
@@ -166,9 +168,10 @@ curl http://localhost:8000/metrics
    Dashboards → New → Import → Upload JSON
     - [Backend-dashboard.json](backend/monitoring/grafana/dashboards/Backend-dashboard.json): [Grafana Labs - 16110](https://grafana.com/grafana/dashboards/16110-fastapi-observability/)
     - [Redis-dashboard.json](backend/monitoring/grafana/dashboards/Redis-dashboard.json): [Grafana Labs - 763](https://grafana.com/grafana/dashboards/763-redis-dashboard-for-prometheus-redis-exporter-1-x/)
-    - [Docker_Container_and_Host_Metrics.json](backend/monitoring/grafana/dashboards/Docker_Container_and_Host_Metrics.json): [Grafana Labs - 10619](https://grafana.com/grafana/dashboards/10619-docker-host-container-overview/) -
-      *только на Unix системах, на Windows часть метрик будет недоступна*
+    - [K8s Node Metrics _ Multi Clusters.json](backend/monitoring/grafana/dashboards/K8s%20Node%20Metrics%20_%20Multi%20Clusters.json): [Grafana Labs - 22413](https://grafana.com/grafana/dashboards/22413-k8s-node-metrics-multi-clusters-node-exporter-prometheus-grafana11-2025-en/) - *только на Unix системах, на Windows часть метрик будет недоступна*
+    - [Docker - cAdvisor Compute Resources.json](backend/monitoring/grafana/dashboards/Docker%20-%20cAdvisor%20Compute%20Resources.json): [Grafana Labs - 21361](https://grafana.com/grafana/dashboards/21361-docker-cadvisor-compute-resources/) - *только на Unix системах, на Windows часть метрик будет недоступна*
     - [NGINX-1748555632072.json](backend/monitoring/grafana/dashboards/NGINX.json): [GitHub - nginx-prometheus-exporter](https://github.com/nginx/nginx-prometheus-exporter/blob/main/grafana/dashboard.json)
+    - [PostgreSQL.json](backend/monitoring/grafana/dashboards/PostgreSQL.json): [Grafana Labs - 9628](https://grafana.com/grafana/dashboards/9628-postgresql-database/)
 
 - **Prometheus**: Собирает метрики FastAPI (`http://localhost:8000/metrics`).
 - **Loki**: Собирает JSON-логи приложения.

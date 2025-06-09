@@ -1,6 +1,119 @@
 version: '3.8'
 
 services:
+  # Базы данных
+  db:
+    image: postgres:17
+    container_name: yadro_db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_DB=randomuser_db
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    command: postgres -c max_connections=200
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redis:
+    image: redis:7
+    container_name: yadro_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --maxmemory 64mb --maxmemory-policy allkeys-lru
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Приложение
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: yadro_backend
+    ports:
+      - "8000:8000" # В реальном prod не нужно
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:1234@db:5432/randomuser_db
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=production
+    command: >
+      sh -c "alembic upgrade head && 
+      gunicorn -k uvicorn.workers.UvicornWorker -w 2 -b 0.0.0.0:8000 --timeout 60 --graceful-timeout 30 app.main:app"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - app-network
+    logging:
+      driver: loki
+      options:
+        # Адрес Loki, куда складывать логи
+        # Обратите внимание, что здесь используется не имя сервиса loki, а локальный хост, на который проброшен порт Loki,
+        # это сделано потому, что логи будет писать docker engine, который расположен на хостовой машине,
+        # и он не знает имени хоста контейнера Loki, которое ему присвоил compose во внутренней сети проекта.
+        loki-url: "http://localhost:3100/loki/api/v1/push"
+        loki-batch-size: "100"
+        loki-retries: 3
+        loki-max-backoff: 1000ms
+        loki-timeout: 2s
+        mode: non-blocking
+        max-buffer-size: 4m
+        loki-external-labels: "container_name={{.Name}},job=fastapi"
+
+  nginx:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+    # volumes:
+    # Для SSL сертификатов:
+    # - ./path/to/certs:/etc/nginx/certs:ro
+    networks:
+      - app-network
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/loki/api/v1/push"
+        loki-batch-size: "100"
+        loki-retries: 3
+        loki-max-backoff: 1000ms
+        loki-timeout: 2s
+        mode: non-blocking
+        max-buffer-size: 4m
+        loki-external-labels: "container_name={{.Name}},job=nginx"
+
+  # Мониторинг
   loki:
     image: grafana/loki:latest
     container_name: loki
@@ -56,83 +169,20 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: yadro_backend
-    ports:
-      - "8000:8000" # В реально prod не нужно
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: yadro_postgres_exporter
     environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:1234@db:5432/randomuser_db
-      - REDIS_URL=redis://redis:6379/0
-      - ENVIRONMENT=production
-    command: >
-      sh -c "alembic upgrade head && 
-      gunicorn -k uvicorn.workers.UvicornWorker -w 2 -b 0.0.0.0:8000 --timeout 60 --graceful-timeout 30 app.main:app"
+      - DATA_SOURCE_NAME=postgresql://postgres:1234@db:5432/randomuser_db?sslmode=disable
+    ports:
+      - "9187:9187"
     depends_on:
       db:
         condition: service_healthy
-      redis:
+      prometheus:
         condition: service_started
     networks:
       - app-network
-    logging:
-      driver: loki
-      options:
-        # Адрес Loki, куда складывать логи
-        # Обратите внимание, что здесь используется не имя сервиса loki, а локальный хост, на который проброшен порт Loki,
-        # это сделано потому, что логи будет писать docker engine, который расположен на хостовой машине,
-        # и он не знает имени хоста контейнера Loki, которое ему присвоил compose во внутренней сети проекта.
-        loki-url: "http://localhost:3100/loki/api/v1/push"
-        loki-batch-size: "100"
-        loki-retries: 3
-        loki-max-backoff: 1000ms
-        loki-timeout: 2s
-        mode: non-blocking
-        max-buffer-size: 4m
-        loki-external-labels: "container_name={{.Name}},job=fastapi"
-
-  db:
-    image: postgres:17
-    container_name: yadro_db
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=1234
-      - POSTGRES_DB=randomuser_db
-    volumes:
-      - db_data:/var/lib/postgresql/data
-    ports:
-      - "5433:5432"
-    command: postgres -c max_connections=200
-    networks:
-      - app-network
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  redis:
-    image: redis:7
-    container_name: yadro_redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    command: redis-server --maxmemory 64mb --maxmemory-policy allkeys-lru
-    networks:
-      - app-network
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 5s
-      timeout: 3s
-      retries: 5
     logging:
       driver: json-file
       options:
@@ -159,33 +209,6 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  nginx:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    depends_on:
-      - backend
-    # volumes:
-    # Для SSL сертификатов:
-    # - ./path/to/certs:/etc/nginx/certs:ro
-    networks:
-      - app-network
-    logging:
-      driver: loki
-      options:
-        loki-url: "http://localhost:3100/loki/api/v1/push"
-        loki-batch-size: "100"
-        loki-retries: 3
-        loki-max-backoff: 1000ms
-        loki-timeout: 2s
-        mode: non-blocking
-        max-buffer-size: 4m
-        loki-external-labels: "container_name={{.Name}},job=nginx"
-
   nginx-exporter:
     image: nginx/nginx-prometheus-exporter:latest
     container_name: nginx_exporter
@@ -208,7 +231,8 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - /var/run:/var/run:ro
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
     networks:
