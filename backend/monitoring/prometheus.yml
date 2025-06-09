@@ -9,18 +9,24 @@ scrape_configs:
         labels:
           app: "yadro_backend"
 
-  - job_name: 'redis'
+  - job_name: "postgres"
     static_configs:
-      - targets: [ 'redis-exporter:9121' ]
+      - targets: [ "postgres-exporter:9187" ]
+        labels:
+          app: "yadro_postgres"
+
+  - job_name: "redis"
+    static_configs:
+      - targets: [ "redis-exporter:9121" ]
+
+  - job_name: "nginx-exporter"
+    static_configs:
+      - targets: [ "nginx-exporter:9113" ]
 
   - job_name: "docker"
     static_configs:
       - targets: [ "cadvisor:8080" ]
 
-  - job_name: 'node-exporter'
+  - job_name: "node-exporter"
     static_configs:
-      - targets: [ 'node-exporter:9100' ]
-
-  - job_name: 'nginx-exporter'
-    static_configs:
-      - targets: [ 'nginx-exporter:9113' ]
+      - targets: [ "node-exporter:9100" ]
