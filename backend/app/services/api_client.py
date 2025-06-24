@@ -17,10 +17,15 @@ async def fetch_random_users(count: int) -> dict[str, Any]:
     :rtype: Dict[str, Any]
     :raises HTTPException: Если запрос к API не удался после 3 попыток.
     """
-    async with AsyncClient() as client:
-        response = await client.get(f"{settings.RANDOMUSER_API_URL}?results={count}")
-        response.raise_for_status()
-        return response.json()
+    async with AsyncClient(timeout=30.0) as client:
+        results = []
+        batch_size = 100
+        for i in range(0, count, batch_size):
+            batch_count = min(batch_size, count - i)
+            response = await client.get(f"{settings.RANDOMUSER_API_URL}?results={batch_count}")
+            response.raise_for_status()
+            results.extend(response.json()["results"])
+        return {"results": results}
 
 
 if __name__ == "__main__":
