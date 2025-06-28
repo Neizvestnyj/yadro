@@ -26,6 +26,7 @@ async def track_inprogress_requests_middleware(
     :param request: Объект запроса FastAPI.
     :param call_next: Функция для вызова следующего обработчика в цепочке middleware.
     :return: Объект ответа FastAPI.
+    :rtype: Response | None
 
     Увеличивает счётчик метрики `fastapi_http_requests_in_progress` при начале обработки запроса
     и уменьшает при завершении (независимо от результата).

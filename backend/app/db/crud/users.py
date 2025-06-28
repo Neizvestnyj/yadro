@@ -95,8 +95,11 @@ async def delete_user(db: AsyncSession, user_id: int) -> bool:
     Удаляет пользователя по ID.
 
     :param db: Асинхронная сессия SQLAlchemy.
+    :type db: AsyncSession
     :param user_id: ID пользователя.
+    :type user_id: int
     :returns: True, если пользователь удален, False, если не найден.
+    :rtype: bool
     """
     stmt = delete(User).where(User.id == user_id).returning(User.id)
     result = await db.execute(stmt)

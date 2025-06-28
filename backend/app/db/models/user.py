@@ -8,31 +8,56 @@ class User(Base):
     """
     Модель пользователя для таблицы 'users'.
 
-    id (int): Уникальный идентификатор пользователя.
-    gender (str): Пол пользователя (например, 'male', 'female').
-    title (str): Обращение (например, 'Mr', 'Miss', 'Mrs').
-    first_name (str): Имя пользователя.
-    last_name (str): Фамилия пользователя.
-    street_number (int): Номер дома.
-    street_name (str): Название улицы.
-    city (str): Город.
-    state (str): Штат или регион.
-    country (str): Страна.
-    postcode (str): Почтовый индекс.
-    latitude (float): Широта.
-    longitude (float): Долгота.
-    timezone_offset (str): Смещение часового пояса (например, '+9:30').
-    phone (str): Основной телефон.
-    cell (str): Мобильный телефон.
-    email (str): Email пользователя.
-    external_id (str): Внешний идентификатор (например, SSN).
-    username (str): Имя пользователя для входа.
-    uuid (str): Уникальный UUID пользователя.
-    picture (str): URL фотографии пользователя (thumbnail).
-    dob (datetime): Дата рождения.
-    registered_at (datetime): Дата регистрации.
-    nat (str): Национальность (например, 'US').
-    created_at (datetime): Время создания записи.
+    :param id: Уникальный идентификатор пользователя.
+    :type id: int
+    :param gender: Пол пользователя (например, 'male', 'female').
+    :type gender: str
+    :param title: Обращение (например, 'Mr', 'Miss', 'Mrs').
+    :type title: str
+    :param first_name: Имя пользователя.
+    :type first_name: str
+    :param last_name: Фамилия пользователя.
+    :type last_name: str
+    :param street_number: Номер дома.
+    :type street_number: int
+    :param street_name: Название улицы.
+    :type street_name: str
+    :param city: Город.
+    :type city: str
+    :param state: Штат или регион.
+    :type state: str
+    :param country: Страна.
+    :type country: str
+    :param postcode: Почтовый индекс.
+    :type postcode: str
+    :param latitude: Широта.
+    :type latitude: float
+    :param longitude: Долгота.
+    :type longitude: float
+    :param timezone_offset: Смещение часового пояса (например, '+9:30').
+    :type timezone_offset: str
+    :param phone: Основной телефон.
+    :type phone: str
+    :param cell: Мобильный телефон.
+    :type cell: str
+    :param email: Email пользователя.
+    :type email: str
+    :param external_id: Внешний идентификатор (например, SSN).
+    :type external_id: str
+    :param username: Имя пользователя для входа.
+    :type username: str
+    :param uuid: Уникальный UUID пользователя.
+    :type uuid: str
+    :param picture: URL фотографии пользователя (thumbnail).
+    :type picture: str
+    :param dob: Дата рождения.
+    :type dob: datetime.datetime
+    :param registered_at: Дата регистрации.
+    :type registered_at: datetime.datetime
+    :param nat: Национальность (например, 'US').
+    :type nat: str
+    :param created_at: Время создания записи.
+    :type created_at: datetime.datetime
     """
 
     __tablename__ = "users"
