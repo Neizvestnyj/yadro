@@ -50,7 +50,7 @@ test:
 # Запуск линтера
 lint:
 	@echo "Running linter..."
-	poetry run ruff check app tests
+	@(cd backend && poetry run ruff check app tests)
 
 # Форматирование кода
 format:
