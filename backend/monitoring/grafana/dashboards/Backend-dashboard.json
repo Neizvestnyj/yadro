@@ -170,7 +170,7 @@
           "refId": "A"
         }
       ],
-      "timeFrom": "24h",
+      "timeFrom": "12h",
       "title": "Total 2xx Requests",
       "transformations": [
         {
@@ -252,7 +252,7 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum(increase(fastapi_http_requests_total{app_name=\"$app_name\", handler!=\"/metrics\", status=~\"4..\"}[$__interval]))",
+          "expr": "sum(fastapi_http_requests_total{app_name=\"$app_name\", handler!=\"/metrics\", status=~\"4..\"})",
           "instant": true,
           "interval": "",
           "legendFormat": "",
@@ -260,7 +260,7 @@
           "refId": "A"
         }
       ],
-      "timeFrom": "24h",
+      "timeFrom": "1h",
       "title": "Total 4xx Requests",
       "transformations": [
         {
@@ -338,7 +338,7 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum(increase(fastapi_http_requests_total{app_name=\"$app_name\", handler!=\"/metrics\", status=~\"5..\"}[$__interval]))",
+          "expr": "sum(fastapi_http_requests_total{app_name=\"$app_name\", handler!=\"/metrics\", status=~\"5..\"})",
           "instant": true,
           "interval": "",
           "legendFormat": "",
@@ -346,7 +346,7 @@
           "refId": "A"
         }
       ],
-      "timeFrom": "24h",
+      "timeFrom": "1h",
       "title": "Total 5xx Requests",
       "transformations": [
         {
@@ -933,5 +933,5 @@
   "timezone": "",
   "title": "Backend",
   "uid": "fastapi-observability",
-  "version": 9
+  "version": 10
 }
