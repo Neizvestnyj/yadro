@@ -20,7 +20,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 4,
+  "id": 16,
   "links": [
     {
       "$$hashKey": "object:2300",
@@ -6089,9 +6089,7 @@
       },
       {
         "current": {
-          "text": [
-            "All"
-          ],
+          "text": "All",
           "value": [
             "$__all"
           ]
@@ -6162,8 +6160,8 @@
       },
       {
         "current": {
-          "text": "/",
-          "value": "/"
+          "text": "/mnt",
+          "value": "/mnt"
         },
         "datasource": "${DS__VICTORIAMETRICS}",
         "definition": "query_result(topk(1,sort_desc (max(node_filesystem_size_bytes{origin_prometheus=~\"$origin_prometheus\",instance=~'$node',fstype=~\"ext.?|xfs\",mountpoint!~\".*pods.*\"}) by (mountpoint))))",
@@ -6180,8 +6178,8 @@
       },
       {
         "current": {
-          "text": "512f35aaa6ca",
-          "value": "512f35aaa6ca"
+          "text": "060a19e01c0e",
+          "value": "060a19e01c0e"
         },
         "datasource": "${DS__VICTORIAMETRICS}",
         "definition": "label_values(node_uname_info{origin_prometheus=~\"$origin_prometheus\",job=~\"$job\",instance=~\"$node\"}, nodename)",
@@ -6230,7 +6228,7 @@
     ]
   },
   "timezone": "browser",
-  "title": "K8s Node Metrics / Multi Clusters (Node Exporter, Prometheus, Grafana11, 2025, EN)",
+  "title": "K8s Node Metrics",
   "uid": "your_custom_uid_X0dfg",
   "version": 2
 }
